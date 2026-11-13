@@ -1,0 +1,16 @@
+{
+  "name": "ritedown",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Ritedown — open-source Markdown editor supporting the latest standards. Web kernel + desktop shell.",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "demo": "pnpm --filter @ritedown/core demo"
+  }
+}
