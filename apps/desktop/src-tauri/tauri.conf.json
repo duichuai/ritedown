@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Ritedown",
+  "version": "1.0.0",
+  "identifier": "com.duichuai.ritedown",
+  "build": {
+    "beforeDevCommand": "pnpm --dir ../editor dev",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "pnpm --dir ../editor build",
+    "frontendDist": "../../editor/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Ritedown",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 720,
+        "minHeight": 480
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/icon.png"]
+  }
+}
