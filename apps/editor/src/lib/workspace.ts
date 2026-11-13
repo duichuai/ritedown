@@ -40,13 +40,20 @@ export function sortEntries(entries: WorkspaceEntry[]): WorkspaceEntry[] {
   })
 }
 
+/** TS DOM lib lacks the async-iterator members on directory handles */
+type IterableDirectoryHandle = FileSystemDirectoryHandle & {
+  entries(): AsyncIterableIterator<
+    [string, FileSystemDirectoryHandle | FileSystemFileHandle]
+  >
+}
+
 /** List one directory's immediate entries, applying the ignore rules.
  * Markdown files keep their handles; other files are listed by name only. */
 export async function listDir(
   dir: FileSystemDirectoryHandle,
 ): Promise<WorkspaceEntry[]> {
   const entries: WorkspaceEntry[] = []
-  for await (const [name, handle] of dir.entries()) {
+  for await (const [name, handle] of (dir as IterableDirectoryHandle).entries()) {
     if (handle.kind === 'directory') {
       if (isIgnoredDirName(name)) continue
       entries.push({ kind: 'directory', name, handle })
@@ -140,14 +147,18 @@ export type PermissionState = 'granted' | 'denied' | 'prompt'
 export async function queryPermission(
   handle: FileSystemDirectoryHandle,
 ): Promise<PermissionState> {
-  return (await handle.queryPermission({ mode: 'readwrite' })) as PermissionState
+  return (
+    (await handle.queryPermission?.({ mode: 'readwrite' })) ?? 'prompt'
+  ) as PermissionState
 }
 
 /** Ask for read/write access; must be called from a user gesture. */
 export async function requestPermission(
   handle: FileSystemDirectoryHandle,
 ): Promise<PermissionState> {
-  return (await handle.requestPermission({ mode: 'readwrite' })) as PermissionState
+  const request = handle.requestPermission?.bind(handle)
+  if (!request) return 'denied'
+  return (await request({ mode: 'readwrite' })) as PermissionState
 }
 
 /** Read a markdown file's text from its handle. */

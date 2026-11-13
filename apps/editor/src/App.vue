@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { builtin, render } from '@ritedown/core'
 import remarkGemoji from 'remark-gemoji'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMath from 'remark-math'
 import EditorPane from './components/EditorPane.vue'
 import PreviewPane from './components/PreviewPane.vue'
+import FileTree from './components/FileTree.vue'
 import { DEFAULT_DOC } from './defaultDoc'
 import { remarkFrontmatterTable } from './lib/frontmatter'
 import { remarkMathToCode } from './lib/mathPlugin'
@@ -15,6 +16,7 @@ import { imageAssetPath, imageMarkdown } from './lib/imageInsert'
 import {
   hasBaseDir,
   pickBaseDir,
+  setBaseDir,
   writeImageToBaseDir,
 } from './lib/relImages'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
@@ -29,8 +31,34 @@ import {
   pickSaveHandle,
   saveToHandle,
 } from './lib/fsAccess'
+import {
+  isWorkspaceSupported,
+  loadWorkspaceHandle,
+  pickWorkspaceDir,
+  queryPermission,
+  readMarkdownFile,
+  requestPermission,
+} from './lib/workspace'
+import {
+  findTabByHandle,
+  makeTab,
+  neighborTabId,
+  type EditorTab,
+} from './lib/tabs'
 
-const markdown = ref(DEFAULT_DOC)
+// multi-tab documents (lib/tabs): the editor binds to the active tab,
+// tab switches replace the CodeMirror document wholesale
+const tabs = ref<EditorTab[]>([makeTab({ name: t('untitled'), text: DEFAULT_DOC })])
+const activeId = ref(tabs.value[0].id)
+const activeTab = computed(
+  () => tabs.value.find((tab) => tab.id === activeId.value) ?? null,
+)
+const markdown = computed({
+  get: () => activeTab.value?.text ?? '',
+  set: (value: string) => {
+    if (activeTab.value) activeTab.value.text = value
+  },
+})
 
 const html = computed(() =>
   render(markdown.value, {
@@ -47,53 +75,83 @@ const html = computed(() =>
 )
 
 const fsSupported = isFsAccessSupported()
-const fileName = ref<string | null>(null)
-const fileHandle = ref<FileSystemFileHandle | null>(null)
-const savedContent = ref(DEFAULT_DOC)
-const dirty = computed(() => markdown.value !== savedContent.value)
+const fileName = computed(() => activeTab.value?.name ?? null)
+const fileHandle = computed(() => activeTab.value?.handle ?? null)
+const dirty = computed(() => tabs.value.some((tab) => tab.text !== tab.saved))
 
 async function onOpen() {
   try {
     const file = await openMarkdownFile()
-    applyOpenedFile(file.name, file.text, file.handle)
+    openTab(file.name, file.text, file.handle, null)
   } catch (err) {
     if (!isAbortError(err)) console.warn('open failed:', err)
   }
 }
 
-function applyOpenedFile(
+/** open a document in a tab (or refresh & focus its existing tab) */
+function openTab(
   name: string,
   text: string,
   handle: FileSystemFileHandle | null,
+  parentDir: FileSystemDirectoryHandle | null,
 ) {
-  markdown.value = text
-  savedContent.value = text
-  fileName.value = name
-  fileHandle.value = handle
+  if (handle) {
+    const existing = findTabByHandle(tabs.value, handle)
+    if (existing) {
+      existing.text = text
+      existing.saved = text
+      activeId.value = existing.id
+      return
+    }
+  }
+  const tab = makeTab({ name, text, handle, parentDir })
+  tabs.value.push(tab)
+  activeId.value = tab.id
+}
+
+function closeTab(id: number) {
+  const index = tabs.value.findIndex((tab) => tab.id === id)
+  if (index === -1) return
+  const tab = tabs.value[index]
+  if (tab.text !== tab.saved && !window.confirm(t('confirmClose'))) return
+  const wasActive = id === activeId.value
+  const neighbor = neighborTabId(tabs.value, index)
+  tabs.value.splice(index, 1)
+  if (wasActive) {
+    if (neighbor !== null) {
+      activeId.value = neighbor
+    } else {
+      const fresh = makeTab({ name: t('untitled'), text: DEFAULT_DOC })
+      tabs.value.push(fresh)
+      activeId.value = fresh.id
+    }
+  }
 }
 
 async function onSave() {
+  const tab = activeTab.value
+  if (!tab) return
   try {
-    if (!fileHandle.value) {
-      fileHandle.value = await pickSaveHandle(fileName.value ?? t('untitled'))
+    if (!tab.handle) {
+      tab.handle = await pickSaveHandle(tab.name)
     }
-    await saveToHandle(fileHandle.value, markdown.value)
-    savedContent.value = markdown.value
-    const file = await fileHandle.value.getFile()
-    fileName.value = file.name
+    await saveToHandle(tab.handle, tab.text)
+    tab.saved = tab.text
+    tab.name = (await tab.handle.getFile()).name
   } catch (err) {
     if (!isAbortError(err)) console.warn('save failed:', err)
   }
 }
 
 async function onSaveAs() {
+  const tab = activeTab.value
+  if (!tab) return
   try {
-    const handle = await pickSaveHandle(fileName.value ?? t('untitled'))
-    await saveToHandle(handle, markdown.value)
-    fileHandle.value = handle
-    savedContent.value = markdown.value
-    const file = await handle.getFile()
-    fileName.value = file.name
+    const handle = await pickSaveHandle(tab.name)
+    await saveToHandle(handle, tab.text)
+    tab.handle = handle
+    tab.saved = tab.text
+    tab.name = (await handle.getFile()).name
   } catch (err) {
     if (!isAbortError(err)) console.warn('save as failed:', err)
   }
@@ -113,7 +171,7 @@ function isMarkdownName(name: string): boolean {
 
 async function openDroppedFile(handle: FileSystemFileHandle, file: File) {
   const text = await file.text()
-  applyOpenedFile(handle.name, text, handle)
+  openTab(handle.name, text, handle, null)
 }
 
 async function onDrop(e: DragEvent) {
@@ -145,7 +203,7 @@ async function onDrop(e: DragEvent) {
   if (!file) return
   try {
     const text = await file.text()
-    applyOpenedFile(file.name, text, null)
+    openTab(file.name, text, null, null)
   } catch (err) {
     console.warn('drop open failed:', err)
   }
@@ -197,6 +255,48 @@ function onKeydown(e: KeyboardEvent) {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
     e.preventDefault()
     void onSave()
+  }
+}
+
+// folder workspace: pick a directory once, browse it in the file tree;
+// the handle is persisted so it can be restored in later sessions
+const workspaceSupported = isWorkspaceSupported()
+const workspace = ref<FileSystemDirectoryHandle | null>(null)
+const pendingRestore = ref<FileSystemDirectoryHandle | null>(null)
+
+async function onPickWorkspace() {
+  const dir = await pickWorkspaceDir()
+  if (dir) {
+    workspace.value = dir
+    pendingRestore.value = null
+  }
+}
+
+onMounted(async () => {
+  const saved = await loadWorkspaceHandle()
+  if (!saved) return
+  if ((await queryPermission(saved)) === 'granted') workspace.value = saved
+  else pendingRestore.value = saved
+})
+
+async function restoreWorkspace() {
+  const handle = pendingRestore.value
+  if (!handle) return
+  pendingRestore.value = null
+  if ((await requestPermission(handle)) === 'granted') workspace.value = handle
+}
+
+async function onOpenWorkspaceFile(payload: {
+  handle: FileSystemFileHandle
+  parentDir: FileSystemDirectoryHandle
+}) {
+  try {
+    const { text } = await readMarkdownFile(payload.handle)
+    openTab(payload.handle.name, text, payload.handle, payload.parentDir)
+    // relative images resolve against the document's own folder
+    setBaseDir(payload.parentDir)
+  } catch (err) {
+    console.warn('open workspace file failed:', err)
   }
 }
 
@@ -265,6 +365,18 @@ const activeTocLine = computed(() => {
 function onTocClick(item: { line: number }) {
   editorPane.value?.scrollToLine(item.line)
 }
+
+// remember the cursor position per tab; restored when switching tabs
+function onCursorLine(line: number) {
+  cursorLine.value = line
+  if (activeTab.value) activeTab.value.cursorLine = line
+}
+
+watch(activeId, async (id) => {
+  await nextTick()
+  const tab = tabs.value.find((tb) => tb.id === id)
+  if (tab) editorPane.value?.scrollToLine(tab.cursorLine)
+})
 
 // bidirectional scroll sync with a short-lived lock to avoid feedback loops
 let lock: 'editor' | 'preview' | null = null
@@ -357,30 +469,69 @@ onBeforeUnmount(() => {
         </button>
       </div>
     </header>
+    <div class="tabbar">
+      <div
+        v-for="tab in tabs"
+        :key="tab.id"
+        class="tab"
+        :class="{ active: tab.id === activeId }"
+        :title="tab.name"
+        @click="activeId = tab.id"
+      >
+        <span class="tab-name">{{ tab.name }}</span>
+        <span v-if="tab.text !== tab.saved" class="tab-dirty">●</span>
+        <button class="tab-close" :aria-label="t('close')" @click.stop="closeTab(tab.id)">
+          ×
+        </button>
+      </div>
+    </div>
     <main class="split" :class="{ 'with-toc': tocVisible }">
-      <aside v-if="tocVisible" class="toc">
-        <p v-if="!tocItems.length" class="toc-empty">{{ t('tocEmpty') }}</p>
-        <ul v-else class="toc-list">
-          <li
-            v-for="(item, i) in tocItems"
-            :key="i"
-            :class="[
-              'toc-item',
-              `toc-depth-${item.depth}`,
-              { 'toc-active': item.line === activeTocLine },
-            ]"
-            :title="item.text"
-            @click="onTocClick(item)"
-          >
-            {{ item.text }}
-          </li>
-        </ul>
+      <aside v-if="tocVisible" class="sidebar">
+        <div class="panel">
+          <div class="panel-header">{{ t('workspace') }}</div>
+          <FileTree
+            v-if="workspace"
+            :root="workspace"
+            @open-file="onOpenWorkspaceFile"
+          />
+          <div v-else-if="pendingRestore" class="panel-empty">
+            <span>{{ t('restoreWorkspace') }}</span>
+            <button class="tb-btn" @click="restoreWorkspace">{{ t('open') }}</button>
+          </div>
+          <div v-else class="panel-empty">
+            <button v-if="workspaceSupported" class="tb-btn" @click="onPickWorkspace">
+              {{ t('openFolder') }}
+            </button>
+            <span v-else class="panel-hint">{{ t('workspaceUnsupported') }}</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">{{ t('outline') }}</div>
+          <div class="toc">
+            <p v-if="!tocItems.length" class="toc-empty">{{ t('tocEmpty') }}</p>
+            <ul v-else class="toc-list">
+              <li
+                v-for="(item, i) in tocItems"
+                :key="i"
+                :class="[
+                  'toc-item',
+                  `toc-depth-${item.depth}`,
+                  { 'toc-active': item.line === activeTocLine },
+                ]"
+                :title="item.text"
+                @click="onTocClick(item)"
+              >
+                {{ item.text }}
+              </li>
+            </ul>
+          </div>
+        </div>
       </aside>
       <EditorPane
         ref="editorPane"
         v-model="markdown"
         :wysiwyg="wysiwyg"
-        @cursor-line="cursorLine = $event"
+        @cursor-line="onCursorLine"
         @cursor-col="cursorCol = $event"
         @image-file="onImageFile"
       />
