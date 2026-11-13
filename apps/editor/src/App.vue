@@ -45,6 +45,11 @@ import {
   neighborTabId,
   type EditorTab,
 } from './lib/tabs'
+import {
+  searchWorkspace,
+  type FileHits,
+  type SearchHit,
+} from './lib/search'
 
 // multi-tab documents (lib/tabs): the editor binds to the active tab,
 // tab switches replace the CodeMirror document wholesale
@@ -300,6 +305,80 @@ async function onOpenWorkspaceFile(payload: {
   }
 }
 
+// workspace global search: debounced traversal, results stream in per file
+const searchQuery = ref('')
+const searchCase = ref(false)
+const searchRegex = ref(false)
+const searchResults = ref<FileHits[] | null>(null)
+const searching = ref(false)
+let searchToken = 0
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+async function runSearch() {
+  const dir = workspace.value
+  const query = searchQuery.value.trim()
+  clearTimeout(searchTimer)
+  if (!dir || !query) {
+    searchToken++ // cancel any running search
+    searchResults.value = null
+    searching.value = false
+    return
+  }
+  const token = ++searchToken
+  searching.value = true
+  searchResults.value = []
+  const options = {
+    caseSensitive: searchCase.value,
+    useRegex: searchRegex.value,
+  }
+  await searchWorkspace(
+    dir,
+    query,
+    options,
+    (file) => {
+      if (token === searchToken) searchResults.value!.push(file)
+    },
+    { get stopped() { return token !== searchToken } },
+  )
+  if (token === searchToken) searching.value = false
+}
+
+watch(searchQuery, () => {
+  clearTimeout(searchTimer)
+  if (!searchQuery.value.trim()) {
+    searchToken++
+    searchResults.value = null
+    searching.value = false
+    return
+  }
+  searchTimer = setTimeout(runSearch, 300)
+})
+
+watch(workspace, () => {
+  searchToken++
+  searchQuery.value = ''
+  searchResults.value = null
+  searching.value = false
+})
+
+function toggleSearchOption(option: 'case' | 'regex') {
+  if (option === 'case') searchCase.value = !searchCase.value
+  else searchRegex.value = !searchRegex.value
+  void runSearch()
+}
+
+async function onOpenSearchHit(file: FileHits, hit: SearchHit) {
+  try {
+    const { text } = await readMarkdownFile(file.handle)
+    openTab(file.handle.name, text, file.handle, file.parentDir)
+    setBaseDir(file.parentDir)
+    await nextTick()
+    editorPane.value?.scrollToLine(hit.line)
+  } catch (err) {
+    console.warn('open search hit failed:', err)
+  }
+}
+
 // WYSIWYG preference (default on; markers hidden outside the cursor span)
 const WYSIWYG_KEY = 'ritedown-wysiwyg'
 const wysiwyg = ref(loadWysiwygPref())
@@ -489,11 +568,56 @@ onBeforeUnmount(() => {
       <aside v-if="tocVisible" class="sidebar">
         <div class="panel">
           <div class="panel-header">{{ t('workspace') }}</div>
-          <FileTree
-            v-if="workspace"
-            :root="workspace"
-            @open-file="onOpenWorkspaceFile"
-          />
+          <template v-if="workspace">
+            <div class="search-row">
+              <input
+                v-model="searchQuery"
+                class="search-input"
+                :placeholder="t('searchPlaceholder')"
+                @keydown.esc="searchQuery = ''"
+              />
+              <button
+                class="search-opt"
+                :class="{ on: searchCase }"
+                title="Aa"
+                @click="toggleSearchOption('case')"
+              >
+                Aa
+              </button>
+              <button
+                class="search-opt"
+                :class="{ on: searchRegex }"
+                title=".*"
+                @click="toggleSearchOption('regex')"
+              >
+                .*
+              </button>
+            </div>
+            <div v-if="searchResults !== null" class="search-results">
+              <p v-if="!searchResults.length" class="panel-hint search-hint">
+                {{ searching ? t('searching') : t('noResults') }}
+              </p>
+              <div v-for="file in searchResults" :key="file.path" class="sr-file">
+                <div class="sr-path">{{ file.path }}</div>
+                <button
+                  v-for="(hit, hi) in file.hits"
+                  :key="hi"
+                  class="sr-hit"
+                  :title="hit.lineText"
+                  @click="onOpenSearchHit(file, hit)"
+                >
+                  <span class="sr-line">{{ hit.line }}</span>
+                  <span class="sr-text"
+                    >{{ hit.lineText.slice(0, hit.column - 1) }}<mark>{{
+                      hit.lineText.slice(hit.column - 1, hit.column - 1 + hit.length)
+                    }}</mark
+                    >{{ hit.lineText.slice(hit.column - 1 + hit.length) }}</span
+                  >
+                </button>
+              </div>
+            </div>
+            <FileTree v-else :root="workspace" @open-file="onOpenWorkspaceFile" />
+          </template>
           <div v-else-if="pendingRestore" class="panel-empty">
             <span>{{ t('restoreWorkspace') }}</span>
             <button class="tb-btn" @click="restoreWorkspace">{{ t('open') }}</button>

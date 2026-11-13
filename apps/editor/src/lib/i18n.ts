@@ -50,6 +50,9 @@ export const messages = {
     workspaceUnsupported: '当前浏览器不支持文件夹工作区',
     confirmClose: '文档有未保存的更改，仍要关闭？',
     close: '关闭',
+    searchPlaceholder: '搜索工作区…',
+    searching: '搜索中…',
+    noResults: '无结果',
     switchLang: 'Switch to English',
   },
   en: {
@@ -79,6 +82,9 @@ export const messages = {
     workspaceUnsupported: 'This browser does not support folder workspaces',
     confirmClose: 'Document has unsaved changes. Close anyway?',
     close: 'Close',
+    searchPlaceholder: 'Search workspace…',
+    searching: 'Searching…',
+    noResults: 'No results',
     switchLang: '切换到中文',
   },
 } as const
