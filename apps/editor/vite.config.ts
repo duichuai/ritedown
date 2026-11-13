@@ -1,9 +1,44 @@
 import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'vite'
+import { createRequire } from 'node:module'
+import { readFileSync } from 'node:fs'
+import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+/**
+ * Build-time virtual module: katex.min.css with every woff2 font inlined as
+ * a base64 data URI (woff/ttf fallbacks stripped). Lets the HTML export be a
+ * truly self-contained single file; loaded lazily via dynamic import so the
+ * ~500 kB chunk never touches first paint.
+ */
+function katexExportCss(): Plugin {
+  const id = '\0virtual:katex-export-css'
+  let css: string | null = null
+  return {
+    name: 'katex-export-css',
+    resolveId(source) {
+      if (source === 'virtual:katex-export-css') return id
+    },
+    load(loadId) {
+      if (loadId !== id) return
+      if (css) return css
+      const require = createRequire(import.meta.url)
+      const cssPath = require.resolve('katex/dist/katex.min.css')
+      css = readFileSync(cssPath, 'utf8')
+        // inline every woff2 font as a base64 data URI
+        .replace(/url\((fonts\/[^)]+\.woff2)\) format\("woff2"\)/g, (_m, font: string) => {
+          const base64 = readFileSync(require.resolve(`katex/dist/${font}`)).toString('base64')
+          return `url(data:font/woff2;base64,${base64}) format("woff2")`
+        })
+        // woff/ttf fallbacks are dead weight in a single-file export
+        .replace(/,url\(fonts\/[^)]+\.woff\) format\("woff"\)/g, '')
+        .replace(/,url\(fonts\/[^)]+\.ttf\) format\("truetype"\)/g, '')
+      return `export default ${JSON.stringify(css)}`
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), katexExportCss()],
   resolve: {
     alias: [
       {

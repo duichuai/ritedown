@@ -13,14 +13,16 @@ export function isFsAccessSupported(): boolean {
   return typeof window !== 'undefined' && 'showOpenFilePicker' in window
 }
 
-function pickerOptions(defaultName?: string) {
-  const options: Record<string, unknown> = {
-    types: [
+function pickerOptions(defaultName?: string, extra?: Record<string, unknown>) {
+  const options: Record<string, unknown> = { ...extra }
+  // markdown is the default accept type; callers may override (e.g. HTML)
+  if (!('types' in options)) {
+    options.types = [
       {
         description: 'Markdown',
         accept: { 'text/markdown': ['.md', '.markdown'] },
       },
-    ],
+    ]
   }
   if (defaultName) options.suggestedName = defaultName
   return options
@@ -49,11 +51,12 @@ export async function saveToHandle(
 /** Ask the user where to save a new file. */
 export async function pickSaveHandle(
   defaultName = 'untitled.md',
+  extraOptions?: Record<string, unknown>,
 ): Promise<FileSystemFileHandle> {
   const picker = window.showSaveFilePicker as (
     options?: unknown,
   ) => Promise<FileSystemFileHandle>
-  return picker(pickerOptions(defaultName))
+  return picker(pickerOptions(defaultName, extraOptions))
 }
 
 /** True for user-cancelled pickers, which callers should ignore. */

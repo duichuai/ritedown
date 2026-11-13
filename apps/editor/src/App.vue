@@ -10,6 +10,7 @@ import { DEFAULT_DOC } from './defaultDoc'
 import { remarkFrontmatterTable } from './lib/frontmatter'
 import { remarkMathToCode } from './lib/mathPlugin'
 import { remarkLineMarkers } from './lib/lineMarkers'
+import { exportHtml } from './lib/exportHtml'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
 import { buildToc } from './lib/toc'
 import { wordCount } from './lib/wordCount'
@@ -144,6 +145,20 @@ async function onDrop(e: DragEvent) {
   }
 }
 
+async function onExportHtml() {
+  try {
+    const host = previewPane.value?.host
+    if (!host) return
+    const base = (fileName.value ?? t('untitled')).replace(
+      /\.(md|markdown)$/i,
+      '',
+    )
+    await exportHtml(host, base, `${base}.html`)
+  } catch (err) {
+    if (!isAbortError(err)) console.warn('export failed:', err)
+  }
+}
+
 function onKeydown(e: KeyboardEvent) {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
     e.preventDefault()
@@ -268,6 +283,7 @@ onBeforeUnmount(() => {
           <button class="tb-btn" @click="onSave">{{ t('save') }}</button>
           <button class="tb-btn" @click="onSaveAs">{{ t('saveAs') }}</button>
         </template>
+        <button class="tb-btn" @click="onExportHtml">{{ t('export') }}</button>
         <button class="tb-btn" :title="t('theme')" @click="cycleTheme">
           {{ themeLabel }}
         </button>
