@@ -146,6 +146,24 @@ body {
 .toc-depth-5 { padding-left: 48px; }
 .toc-depth-6 { padding-left: 56px; }
 
+/* status bar */
+.statusbar {
+  height: 28px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-soft);
+  user-select: none;
+}
+
+.statusbar-cursor {
+  margin-left: auto;
+}
+
 .pane {
   min-width: 0;
   overflow: auto;

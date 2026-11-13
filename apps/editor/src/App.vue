@@ -9,6 +9,7 @@ import { remarkMathToCode } from './lib/mathPlugin'
 import { remarkLineMarkers } from './lib/lineMarkers'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
 import { buildToc } from './lib/toc'
+import { wordCount } from './lib/wordCount'
 import {
   isAbortError,
   isFsAccessSupported,
@@ -80,7 +81,12 @@ const previewPane = ref<InstanceType<typeof PreviewPane> | null>(null)
 // outline (TOC)
 const tocVisible = ref(true)
 const cursorLine = ref(1)
+const cursorCol = ref(1)
 const tocItems = computed(() => buildToc(markdown.value))
+const stats = computed(() => ({
+  ...wordCount(markdown.value),
+  lines: markdown.value.split('\n').length,
+}))
 const activeTocLine = computed(() => {
   let line = 0
   for (const item of tocItems.value) {
@@ -181,8 +187,19 @@ onBeforeUnmount(() => {
           </li>
         </ul>
       </aside>
-      <EditorPane ref="editorPane" v-model="markdown" @cursor-line="cursorLine = $event" />
+      <EditorPane
+        ref="editorPane"
+        v-model="markdown"
+        @cursor-line="cursorLine = $event"
+        @cursor-col="cursorCol = $event"
+      />
       <PreviewPane ref="previewPane" :html="html" />
     </main>
+    <footer class="statusbar">
+      <span>字数 {{ stats.words }}</span>
+      <span>字符 {{ stats.characters }}</span>
+      <span>行数 {{ stats.lines }}</span>
+      <span class="statusbar-cursor">行 {{ cursorLine }} 列 {{ cursorCol }}</span>
+    </footer>
   </div>
 </template>

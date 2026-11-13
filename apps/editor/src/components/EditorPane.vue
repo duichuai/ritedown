@@ -7,6 +7,7 @@ const props = defineProps<{ modelValue: string }>()
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   'cursor-line': [line: number]
+  'cursor-col': [column: number]
 }>()
 
 const host = ref<HTMLElement | null>(null)
@@ -24,10 +25,10 @@ onMounted(() => {
           emit('update:modelValue', update.state.doc.toString())
         }
         if (update.selectionSet || update.docChanged) {
-          emit(
-            'cursor-line',
-            update.state.doc.lineAt(update.state.selection.main.head).number,
-          )
+          const head = update.state.selection.main.head
+          const line = update.state.doc.lineAt(head)
+          emit('cursor-line', line.number)
+          emit('cursor-col', head - line.from + 1)
         }
       }),
     ],
