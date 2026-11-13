@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { builtin, render } from '@ritedown/core'
+import remarkGemoji from 'remark-gemoji'
+import remarkFrontmatter from 'remark-frontmatter'
 import remarkMath from 'remark-math'
 import EditorPane from './components/EditorPane.vue'
 import PreviewPane from './components/PreviewPane.vue'
 import { DEFAULT_DOC } from './defaultDoc'
+import { remarkFrontmatterTable } from './lib/frontmatter'
 import { remarkMathToCode } from './lib/mathPlugin'
 import { remarkLineMarkers } from './lib/lineMarkers'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
@@ -24,7 +27,15 @@ const markdown = ref(DEFAULT_DOC)
 
 const html = computed(() =>
   render(markdown.value, {
-    extensions: [builtin.gfm, remarkMath, remarkMathToCode, remarkLineMarkers],
+    extensions: [
+      builtin.gfm,
+      remarkGemoji,
+      remarkMath,
+      remarkMathToCode,
+      remarkLineMarkers,
+      [remarkFrontmatter, ['yaml']],
+      remarkFrontmatterTable,
+    ],
   }),
 )
 

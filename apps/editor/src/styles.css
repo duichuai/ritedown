@@ -321,6 +321,22 @@ body {
   margin-right: 0.4em;
 }
 
+/* front matter (rendered by the editor frontmatter pipeline) */
+.prose .frontmatter {
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.prose .frontmatter table {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.prose .frontmatter th {
+  color: var(--fg-soft);
+  background: none;
+}
+
 /* GFM alerts (rendered by @ritedown/gfm-alerts) */
 .prose .markdown-alert {
   padding: 8px 16px;
