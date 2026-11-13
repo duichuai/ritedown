@@ -3,4 +3,5 @@
 interface Window {
   showOpenFilePicker?: (options?: unknown) => Promise<FileSystemFileHandle[]>
   showSaveFilePicker?: (options?: unknown) => Promise<FileSystemFileHandle>
+  showDirectoryPicker?: (options?: unknown) => Promise<FileSystemDirectoryHandle>
 }

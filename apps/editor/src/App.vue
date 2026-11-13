@@ -290,7 +290,7 @@ onBeforeUnmount(() => {
         @cursor-line="cursorLine = $event"
         @cursor-col="cursorCol = $event"
       />
-      <PreviewPane ref="previewPane" :html="html" />
+      <PreviewPane ref="previewPane" :html="html" :file-handle="fileHandle" />
     </main>
     <footer class="statusbar">
       <span>{{ t('words') }} {{ stats.words }}</span>

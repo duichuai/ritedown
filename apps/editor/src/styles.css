@@ -197,6 +197,38 @@ body {
   overflow: auto;
 }
 
+/* preview wrapper: hosts the relative-image folder hint */
+.preview-wrap {
+  position: relative;
+  min-width: 0;
+  display: flex;
+}
+
+.preview-wrap .preview-pane {
+  flex: 1;
+}
+
+.img-dir-hint {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 5;
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-soft);
+  color: var(--fg-soft);
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.img-dir-hint:hover {
+  color: var(--fg);
+  background: var(--bg);
+}
+
 .editor-pane {
   border-right: 1px solid var(--border);
 }
