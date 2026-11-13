@@ -8,6 +8,7 @@ import { DEFAULT_DOC } from './defaultDoc'
 import { remarkMathToCode } from './lib/mathPlugin'
 import { remarkLineMarkers } from './lib/lineMarkers'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
+import { buildToc } from './lib/toc'
 import {
   isAbortError,
   isFsAccessSupported,
@@ -76,6 +77,23 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
 const editorPane = ref<InstanceType<typeof EditorPane> | null>(null)
 const previewPane = ref<InstanceType<typeof PreviewPane> | null>(null)
 
+// outline (TOC)
+const tocVisible = ref(true)
+const cursorLine = ref(1)
+const tocItems = computed(() => buildToc(markdown.value))
+const activeTocLine = computed(() => {
+  let line = 0
+  for (const item of tocItems.value) {
+    if (item.line <= cursorLine.value) line = item.line
+    else break
+  }
+  return line
+})
+
+function onTocClick(item: { line: number }) {
+  editorPane.value?.scrollToLine(item.line)
+}
+
 // bidirectional scroll sync with a short-lived lock to avoid feedback loops
 let lock: 'editor' | 'preview' | null = null
 let unlockTimer: ReturnType<typeof setTimeout> | undefined
@@ -136,13 +154,34 @@ onBeforeUnmount(() => {
       <span class="brand">Ritedown</span>
       <span v-if="fileName" class="filename">{{ fileName }}</span>
       <span v-if="dirty" class="dirty-dot" title="有未保存的更改">●</span>
-      <div v-if="fsSupported" class="titlebar-actions">
-        <button class="tb-btn" @click="onOpen">打开</button>
-        <button class="tb-btn" @click="onSave">保存</button>
+      <div class="titlebar-actions">
+        <button class="tb-btn" @click="tocVisible = !tocVisible">大纲</button>
+        <template v-if="fsSupported">
+          <button class="tb-btn" @click="onOpen">打开</button>
+          <button class="tb-btn" @click="onSave">保存</button>
+        </template>
       </div>
     </header>
-    <main class="split">
-      <EditorPane ref="editorPane" v-model="markdown" />
+    <main class="split" :class="{ 'with-toc': tocVisible }">
+      <aside v-if="tocVisible" class="toc">
+        <p v-if="!tocItems.length" class="toc-empty">暂无标题</p>
+        <ul v-else class="toc-list">
+          <li
+            v-for="(item, i) in tocItems"
+            :key="i"
+            :class="[
+              'toc-item',
+              `toc-depth-${item.depth}`,
+              { 'toc-active': item.line === activeTocLine },
+            ]"
+            :title="item.text"
+            @click="onTocClick(item)"
+          >
+            {{ item.text }}
+          </li>
+        </ul>
+      </aside>
+      <EditorPane ref="editorPane" v-model="markdown" @cursor-line="cursorLine = $event" />
       <PreviewPane ref="previewPane" :html="html" />
     </main>
   </div>

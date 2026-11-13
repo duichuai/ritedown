@@ -95,6 +95,57 @@ body {
   min-height: 0;
 }
 
+.split.with-toc {
+  grid-template-columns: 220px 1fr 1fr;
+}
+
+/* outline (TOC) */
+.toc {
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg-soft);
+  padding: 8px 0;
+  user-select: none;
+}
+
+.toc-empty {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toc-item {
+  padding: 4px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+.toc-item:hover {
+  background: var(--bg);
+}
+
+.toc-item.toc-active {
+  border-left-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg);
+}
+
+.toc-depth-2 { padding-left: 24px; }
+.toc-depth-3 { padding-left: 32px; }
+.toc-depth-4 { padding-left: 40px; }
+.toc-depth-5 { padding-left: 48px; }
+.toc-depth-6 { padding-left: 56px; }
+
 .pane {
   min-width: 0;
   overflow: auto;
