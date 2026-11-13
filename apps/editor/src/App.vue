@@ -10,6 +10,7 @@ import { remarkLineMarkers } from './lib/lineMarkers'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
 import { buildToc } from './lib/toc'
 import { wordCount } from './lib/wordCount'
+import { locale, t, toggleLocale } from './lib/i18n'
 import {
   isAbortError,
   isFsAccessSupported,
@@ -47,7 +48,7 @@ async function onOpen() {
 async function onSave() {
   try {
     if (!fileHandle.value) {
-      fileHandle.value = await pickSaveHandle(fileName.value ?? '未命名.md')
+      fileHandle.value = await pickSaveHandle(fileName.value ?? t('untitled'))
     }
     await saveToHandle(fileHandle.value, markdown.value)
     savedContent.value = markdown.value
@@ -159,18 +160,21 @@ onBeforeUnmount(() => {
     <header class="titlebar">
       <span class="brand">Ritedown</span>
       <span v-if="fileName" class="filename">{{ fileName }}</span>
-      <span v-if="dirty" class="dirty-dot" title="有未保存的更改">●</span>
+      <span v-if="dirty" class="dirty-dot" :title="t('dirty')">●</span>
       <div class="titlebar-actions">
-        <button class="tb-btn" @click="tocVisible = !tocVisible">大纲</button>
+        <button class="tb-btn" @click="tocVisible = !tocVisible">{{ t('outline') }}</button>
         <template v-if="fsSupported">
-          <button class="tb-btn" @click="onOpen">打开</button>
-          <button class="tb-btn" @click="onSave">保存</button>
+          <button class="tb-btn" @click="onOpen">{{ t('open') }}</button>
+          <button class="tb-btn" @click="onSave">{{ t('save') }}</button>
         </template>
+        <button class="tb-btn tb-lang" :title="t('switchLang')" @click="toggleLocale">
+          {{ locale === 'zh' ? 'EN' : '中文' }}
+        </button>
       </div>
     </header>
     <main class="split" :class="{ 'with-toc': tocVisible }">
       <aside v-if="tocVisible" class="toc">
-        <p v-if="!tocItems.length" class="toc-empty">暂无标题</p>
+        <p v-if="!tocItems.length" class="toc-empty">{{ t('tocEmpty') }}</p>
         <ul v-else class="toc-list">
           <li
             v-for="(item, i) in tocItems"
@@ -196,10 +200,10 @@ onBeforeUnmount(() => {
       <PreviewPane ref="previewPane" :html="html" />
     </main>
     <footer class="statusbar">
-      <span>字数 {{ stats.words }}</span>
-      <span>字符 {{ stats.characters }}</span>
-      <span>行数 {{ stats.lines }}</span>
-      <span class="statusbar-cursor">行 {{ cursorLine }} 列 {{ cursorCol }}</span>
+      <span>{{ t('words') }} {{ stats.words }}</span>
+      <span>{{ t('characters') }} {{ stats.characters }}</span>
+      <span>{{ t('lines') }} {{ stats.lines }}</span>
+      <span class="statusbar-cursor">{{ t('line') }} {{ cursorLine }} {{ t('col') }} {{ cursorCol }}</span>
     </footer>
   </div>
 </template>
