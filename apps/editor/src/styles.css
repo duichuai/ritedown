@@ -1,0 +1,174 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --bg-soft: #f6f8fa;
+  --fg: #1f2328;
+  --fg-soft: #59636e;
+  --border: #d1d9e0;
+  --accent: #0969da;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #151b23;
+    --fg: #f0f6fc;
+    --fg-soft: #9198a1;
+    --border: #3d444d;
+    --accent: #4493f8;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.titlebar {
+  height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-soft);
+  user-select: none;
+}
+
+.split {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+}
+
+.pane {
+  min-width: 0;
+  overflow: auto;
+}
+
+.editor-pane {
+  border-right: 1px solid var(--border);
+}
+
+.editor-pane .cm-editor {
+  height: 100%;
+}
+
+.editor-pane .cm-scroller {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.preview-pane {
+  padding: 16px 32px;
+}
+
+/* prose styling */
+.prose {
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  line-height: 1.3;
+}
+
+.prose h1 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose code {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  font-size: 85%;
+  background: var(--bg-soft);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+}
+
+.prose pre {
+  background: var(--bg-soft);
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow: auto;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose blockquote {
+  margin: 0 0 16px;
+  padding: 0 1em;
+  border-left: 3px solid var(--border);
+  color: var(--fg-soft);
+}
+
+.prose table {
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--border);
+  padding: 6px 13px;
+}
+
+.prose th {
+  background: var(--bg-soft);
+}
+
+.prose a {
+  color: var(--accent);
+}
+
+.prose input[type='checkbox'] {
+  margin-right: 0.4em;
+}
+
+/* GFM alerts (rendered by @ritedown/gfm-alerts) */
+.prose .markdown-alert {
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg-soft);
+}
+
+.prose .markdown-alert-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
