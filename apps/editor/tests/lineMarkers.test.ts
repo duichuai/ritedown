@@ -23,6 +23,10 @@ const makeTree = (): Root => ({
     {
       type: 'list',
       ordered: false,
+      position: {
+        start: { line: 4, column: 1, offset: 16 },
+        end: { line: 5, column: 8, offset: 24 },
+      },
       children: [
         {
           type: 'listItem',
