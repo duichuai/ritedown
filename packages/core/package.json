@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "Ritedown kernel: Markdown parse & render pipeline (CommonMark 0.31.2 based, pluggable extensions)",
   "license": "MIT",
+  "author": "duichuai",
+  "homepage": "https://duichuai.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/duichuai/ritedown.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/duichuai/ritedown/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

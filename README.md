@@ -1,8 +1,14 @@
 # Ritedown
 
+[![CI](https://github.com/duichuai/ritedown/actions/workflows/ci.yml/badge.svg)](https://github.com/duichuai/ritedown/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 An open-source Markdown editor that supports the **latest Markdown standards** — a free alternative to Typora. 开源的 Markdown 读写编辑器，支持最新 Markdown 标准。
 
 > rite (write) + down (markdown) — write it down.
+
+- Homepage / 官网: <https://duichuai.com>
+- Repository: <https://github.com/duichuai/ritedown>
 
 ## Status / 状态
 
@@ -34,9 +40,6 @@ corepack pnpm test
 corepack pnpm build
 ```
 
-> 本机若把仓库放在 CIFS/SMB 挂载盘上，Node 的异步文件读取会随机 `EINVAL`（tsc/Vite/vitest 启动即崩）。
-> 解决：把仓库放到本地 ext4 并 bind mount 回原路径，见 [scripts/dev-mount.sh](scripts/dev-mount.sh)。
-
 ## License
 
-MIT
+MIT © duichuai

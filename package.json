@@ -4,6 +4,15 @@
   "version": "0.1.0",
   "description": "Ritedown — open-source Markdown editor supporting the latest standards. Web kernel + desktop shell.",
   "license": "MIT",
+  "author": "duichuai",
+  "homepage": "https://duichuai.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/duichuai/ritedown.git"
+  },
+  "bugs": {
+    "url": "https://github.com/duichuai/ritedown/issues"
+  },
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20"

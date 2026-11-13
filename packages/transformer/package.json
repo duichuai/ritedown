@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "remark plugin: GitHub Flavored Markdown alerts (> [!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION])",
   "license": "MIT",
+  "author": "duichuai",
+  "homepage": "https://duichuai.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/duichuai/ritedown.git",
+    "directory": "packages/transformer"
+  },
+  "bugs": {
+    "url": "https://github.com/duichuai/ritedown/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
