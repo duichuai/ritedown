@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { listDir, type WorkspaceEntry } from '../lib/workspace'
+import { provider } from '../lib/provider'
+import type { DirRef, FileRef, WorkspaceEntry } from '../lib/fileProvider'
 
 const props = defineProps<{
   entry: WorkspaceEntry
   depth: number
   /** the directory containing this entry, for relative-image resolution */
-  parentDir: FileSystemDirectoryHandle
+  parentDir: DirRef
 }>()
 
 const emit = defineEmits<{
-  'open-file': [payload: { handle: FileSystemFileHandle; parentDir: FileSystemDirectoryHandle }]
+  'open-file': [payload: { handle: FileRef; parentDir: DirRef }]
 }>()
 
 const expanded = ref(false)
@@ -26,7 +27,7 @@ async function toggle() {
   if (props.entry.kind !== 'directory') return
   expanded.value = !expanded.value
   if (expanded.value && children.value === null) {
-    children.value = await listDir(props.entry.handle)
+    children.value = await provider.listDir(props.entry.handle)
   }
 }
 </script>

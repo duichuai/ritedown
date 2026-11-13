@@ -5,6 +5,7 @@ import {
   searchWorkspace,
   type FileHits,
 } from '../src/lib/search'
+import { toDirRef } from '../src/lib/providerWeb'
 
 describe('buildMatcher', () => {
   it('escapes literal queries unless regex mode is on', () => {
@@ -65,11 +66,11 @@ describe('searchWorkspace', () => {
   }
 
   it('walks subfolders, reports markdown hits with relative paths', async () => {
-    const dir = fakeDir([
+    const dir = toDirRef(fakeDir([
       ['notes.md', fakeFile('notes.md', 'hello world\nHELLO again')],
       ['readme.txt', fakeFile('readme.txt', 'hello ignored')],
       ['docs', fakeDir([['guide.md', fakeFile('guide.md', 'say hello')]])],
-    ])
+    ]) as FileSystemDirectoryHandle)
     const files: FileHits[] = []
     const complete = await searchWorkspace(dir, 'hello', {}, (f) => files.push(f), {
       stopped: false,
@@ -81,10 +82,10 @@ describe('searchWorkspace', () => {
   })
 
   it('stops when the signal is set', async () => {
-    const dir = fakeDir([
+    const dir = toDirRef(fakeDir([
       ['a.md', fakeFile('a.md', 'hello')],
       ['b.md', fakeFile('b.md', 'hello')],
-    ])
+    ]) as FileSystemDirectoryHandle)
     const signal = { stopped: false }
     const files: FileHits[] = []
     await searchWorkspace(dir, 'hello', {}, (f) => {
@@ -95,7 +96,7 @@ describe('searchWorkspace', () => {
   })
 
   it('returns true immediately for an empty query', async () => {
-    const dir = fakeDir([['a.md', fakeFile('a.md', 'hello')]])
+    const dir = toDirRef(fakeDir([['a.md', fakeFile('a.md', 'hello')]]) as FileSystemDirectoryHandle)
     const scanned: FileHits[] = []
     expect(
       await searchWorkspace(dir, '', {}, (f) => scanned.push(f), { stopped: false }),

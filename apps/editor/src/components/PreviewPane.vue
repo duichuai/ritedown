@@ -10,16 +10,18 @@ import {
   pickBaseDir,
   resolveRelativeImages,
 } from '../lib/relImages'
-import { isFsAccessSupported } from '../lib/fsAccess'
+import { provider } from '../lib/provider'
+import type { FileRef } from '../lib/fileProvider'
 import { t } from '../lib/i18n'
 
 const props = defineProps<{
   html: string
-  fileHandle: FileSystemFileHandle | null
+  fileHandle: FileRef | null
 }>()
 
 const host = ref<HTMLElement | null>(null)
 const relImagesPending = ref(false)
+const fsSupported = provider.fsSupported
 
 async function decorate() {
   const root = host.value
@@ -33,11 +35,11 @@ async function decorate() {
   // offer the folder picker only when relative images exist and no folder
   // has been picked yet; once picked, missing files stay silent
   relImagesPending.value =
-    isFsAccessSupported() && !hasBaseDir() && hasUnresolvedRelativeImages(root)
+    fsSupported && !hasBaseDir() && hasUnresolvedRelativeImages(root)
 }
 
 async function onPickImageDir() {
-  const dir = await pickBaseDir(props.fileHandle ?? undefined)
+  const dir = await pickBaseDir(props.fileHandle)
   if (!dir) return
   const root = host.value
   if (!root) return
@@ -72,7 +74,7 @@ defineExpose({
   <div class="preview-wrap">
     <section class="pane preview-pane prose" ref="host" v-html="html"></section>
     <button
-      v-if="relImagesPending && isFsAccessSupported()"
+      v-if="relImagesPending && fsSupported"
       class="img-dir-hint"
       :title="t('pickImageDir')"
       @click="onPickImageDir"

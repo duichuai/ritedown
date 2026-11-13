@@ -4,13 +4,15 @@
  * active id. Pure helpers here are unit-tested without a browser.
  */
 
+import type { DirRef, FileRef } from './fileProvider'
+
 export interface EditorTab {
   id: number
   name: string
-  /** file handle when the tab maps to a real file (null: unsaved draft) */
-  handle: FileSystemFileHandle | null
+  /** file ref when the tab maps to a real file (null: unsaved draft) */
+  handle: FileRef | null
   /** the folder containing the file, for relative-image resolution */
-  parentDir: FileSystemDirectoryHandle | null
+  parentDir: DirRef | null
   text: string
   saved: string
   cursorLine: number
@@ -25,8 +27,8 @@ export function nextTabId(): number {
 export function makeTab(init: {
   name: string
   text: string
-  handle?: FileSystemFileHandle | null
-  parentDir?: FileSystemDirectoryHandle | null
+  handle?: FileRef | null
+  parentDir?: DirRef | null
 }): EditorTab {
   return {
     id: nextTabId(),
@@ -47,10 +49,13 @@ export function neighborTabId(tabs: EditorTab[], index: number): number | null {
   return neighbor.id
 }
 
-/** the tab already editing this file, if any (dedupe on open) */
+/** the tab already editing this file, if any (dedupe on open, by ref id) */
 export function findTabByHandle(
   tabs: EditorTab[],
-  handle: FileSystemFileHandle,
+  file: FileRef,
 ): EditorTab | null {
-  return tabs.find((tab) => tab.handle === handle) ?? null
+  return (
+    tabs.find((tab) => tab.handle !== null && tab.handle.id === file.id) ??
+    null
+  )
 }

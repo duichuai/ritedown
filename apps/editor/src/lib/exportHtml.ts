@@ -1,4 +1,4 @@
-import { isAbortError, pickSaveHandle } from './fsAccess'
+import { provider } from './provider'
 
 /**
  * Self-contained single-file HTML export. The body HTML is snapshotted from
@@ -122,17 +122,15 @@ export async function exportHtml(
   const katexCss = (await import('virtual:katex-export-css')).default
   const html = assembleDocument(container.innerHTML, title, katexCss)
 
-  if ('showSaveFilePicker' in window) {
+  if (provider.fsSupported) {
     try {
-      const handle = await pickSaveHandle(suggestedName, {
-        types: [{ description: 'HTML', accept: { 'text/html': ['.html'] } }],
+      await provider.saveFile(suggestedName, html, null, {
+        description: 'HTML',
+        extensions: ['html'],
       })
-      const writable = await handle.createWritable()
-      await writable.write(html)
-      await writable.close()
-      return
+      return // saved, or the user cancelled the dialog
     } catch (err) {
-      if (isAbortError(err)) return
+      console.warn('export save failed:', err)
       // fall through to anchor download
     }
   }

@@ -24,21 +24,9 @@ import { buildToc } from './lib/toc'
 import { wordCount } from './lib/wordCount'
 import { locale, t, toggleLocale } from './lib/i18n'
 import { cycleTheme, themePref } from './lib/theme'
-import {
-  isAbortError,
-  isFsAccessSupported,
-  openMarkdownFile,
-  pickSaveHandle,
-  saveToHandle,
-} from './lib/fsAccess'
-import {
-  isWorkspaceSupported,
-  loadWorkspaceHandle,
-  pickWorkspaceDir,
-  queryPermission,
-  readMarkdownFile,
-  requestPermission,
-} from './lib/workspace'
+import { provider } from './lib/provider'
+import { toFileRef } from './lib/providerWeb'
+import type { DirRef, FileRef } from './lib/fileProvider'
 import {
   findTabByHandle,
   makeTab,
@@ -79,17 +67,17 @@ const html = computed(() =>
   }),
 )
 
-const fsSupported = isFsAccessSupported()
+const fsSupported = provider.fsSupported
 const fileName = computed(() => activeTab.value?.name ?? null)
 const fileHandle = computed(() => activeTab.value?.handle ?? null)
 const dirty = computed(() => tabs.value.some((tab) => tab.text !== tab.saved))
 
 async function onOpen() {
   try {
-    const file = await openMarkdownFile()
-    openTab(file.name, file.text, file.handle, null)
+    const doc = await provider.openFile()
+    if (doc) openTab(doc.name, doc.text, doc.file, null)
   } catch (err) {
-    if (!isAbortError(err)) console.warn('open failed:', err)
+    console.warn('open failed:', err)
   }
 }
 
@@ -97,8 +85,8 @@ async function onOpen() {
 function openTab(
   name: string,
   text: string,
-  handle: FileSystemFileHandle | null,
-  parentDir: FileSystemDirectoryHandle | null,
+  handle: FileRef | null,
+  parentDir: DirRef | null,
 ) {
   if (handle) {
     const existing = findTabByHandle(tabs.value, handle)
@@ -137,14 +125,13 @@ async function onSave() {
   const tab = activeTab.value
   if (!tab) return
   try {
-    if (!tab.handle) {
-      tab.handle = await pickSaveHandle(tab.name)
-    }
-    await saveToHandle(tab.handle, tab.text)
+    const saved = await provider.saveFile(tab.name, tab.text, tab.handle)
+    if (!saved) return
+    tab.handle = saved.file
     tab.saved = tab.text
-    tab.name = (await tab.handle.getFile()).name
+    tab.name = saved.name
   } catch (err) {
-    if (!isAbortError(err)) console.warn('save failed:', err)
+    console.warn('save failed:', err)
   }
 }
 
@@ -152,13 +139,13 @@ async function onSaveAs() {
   const tab = activeTab.value
   if (!tab) return
   try {
-    const handle = await pickSaveHandle(tab.name)
-    await saveToHandle(handle, tab.text)
-    tab.handle = handle
+    const saved = await provider.saveFile(tab.name, tab.text)
+    if (!saved) return
+    tab.handle = saved.file
     tab.saved = tab.text
-    tab.name = (await handle.getFile()).name
+    tab.name = saved.name
   } catch (err) {
-    if (!isAbortError(err)) console.warn('save as failed:', err)
+    console.warn('save as failed:', err)
   }
 }
 
@@ -176,7 +163,7 @@ function isMarkdownName(name: string): boolean {
 
 async function openDroppedFile(handle: FileSystemFileHandle, file: File) {
   const text = await file.text()
-  openTab(handle.name, text, handle, null)
+  openTab(handle.name, text, toFileRef(handle), null)
 }
 
 async function onDrop(e: DragEvent) {
@@ -224,7 +211,7 @@ async function onExportHtml() {
     )
     await exportHtml(host, base, `${base}.html`)
   } catch (err) {
-    if (!isAbortError(err)) console.warn('export failed:', err)
+    console.warn('export failed:', err)
   }
 }
 
@@ -245,8 +232,8 @@ async function onImageFile(file: File) {
     await writeAndInsert()
     return
   }
-  if (isFsAccessSupported()) {
-    const dir = await pickBaseDir(fileHandle.value ?? undefined)
+  if (provider.fsSupported) {
+    const dir = await pickBaseDir(fileHandle.value)
     if (dir && (await writeAndInsert())) return
     if (dir) return
     // user cancelled the picker — fall through to the embedded fallback
@@ -264,13 +251,13 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 // folder workspace: pick a directory once, browse it in the file tree;
-// the handle is persisted so it can be restored in later sessions
-const workspaceSupported = isWorkspaceSupported()
-const workspace = ref<FileSystemDirectoryHandle | null>(null)
-const pendingRestore = ref<FileSystemDirectoryHandle | null>(null)
+// the workspace is persisted by the provider (web: IndexedDB, desktop: path)
+const workspaceSupported = provider.workspaceSupported
+const workspace = ref<DirRef | null>(null)
+const pendingRestore = ref<DirRef | null>(null)
 
 async function onPickWorkspace() {
-  const dir = await pickWorkspaceDir()
+  const dir = await provider.pickWorkspace()
   if (dir) {
     workspace.value = dir
     pendingRestore.value = null
@@ -278,26 +265,27 @@ async function onPickWorkspace() {
 }
 
 onMounted(async () => {
-  const saved = await loadWorkspaceHandle()
-  if (!saved) return
-  if ((await queryPermission(saved)) === 'granted') workspace.value = saved
-  else pendingRestore.value = saved
+  const restored = await provider.restoreWorkspace()
+  if (!restored) return
+  if ('dir' in restored) workspace.value = restored.dir
+  else pendingRestore.value = restored.needsPermission
 })
 
 async function restoreWorkspace() {
-  const handle = pendingRestore.value
-  if (!handle) return
+  const dir = pendingRestore.value
+  if (!dir) return
   pendingRestore.value = null
-  if ((await requestPermission(handle)) === 'granted') workspace.value = handle
+  const granted = await provider.grantWorkspace(dir)
+  if (granted) workspace.value = granted
 }
 
 async function onOpenWorkspaceFile(payload: {
-  handle: FileSystemFileHandle
-  parentDir: FileSystemDirectoryHandle
+  handle: FileRef
+  parentDir: DirRef
 }) {
   try {
-    const { text } = await readMarkdownFile(payload.handle)
-    openTab(payload.handle.name, text, payload.handle, payload.parentDir)
+    const { name, text } = await provider.readDoc(payload.handle)
+    openTab(name, text, payload.handle, payload.parentDir)
     // relative images resolve against the document's own folder
     setBaseDir(payload.parentDir)
   } catch (err) {
@@ -369,8 +357,8 @@ function toggleSearchOption(option: 'case' | 'regex') {
 
 async function onOpenSearchHit(file: FileHits, hit: SearchHit) {
   try {
-    const { text } = await readMarkdownFile(file.handle)
-    openTab(file.handle.name, text, file.handle, file.parentDir)
+    const { name, text } = await provider.readDoc(file.file)
+    openTab(name, text, file.file, file.parentDir)
     setBaseDir(file.parentDir)
     await nextTick()
     editorPane.value?.scrollToLine(hit.line)

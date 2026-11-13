@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { listDir, type WorkspaceEntry } from '../lib/workspace'
+import { provider } from '../lib/provider'
+import type { DirRef, FileRef, WorkspaceEntry } from '../lib/fileProvider'
 import FileTreeNode from './FileTreeNode.vue'
 
 const props = defineProps<{
-  root: FileSystemDirectoryHandle | null
+  root: DirRef | null
 }>()
 
 const emit = defineEmits<{
-  'open-file': [payload: { handle: FileSystemFileHandle; parentDir: FileSystemDirectoryHandle }]
+  'open-file': [payload: { handle: FileRef; parentDir: DirRef }]
 }>()
 
 const entries = ref<WorkspaceEntry[] | null>(null)
 
 async function loadRoot() {
   entries.value = null
-  if (props.root) entries.value = await listDir(props.root)
+  if (props.root) entries.value = await provider.listDir(props.root)
 }
 
 onMounted(loadRoot)

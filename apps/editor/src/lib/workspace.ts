@@ -1,25 +1,12 @@
 /**
- * Folder workspace data layer (File System Access API, Chromium). Provides
- * directory enumeration for the file tree, workspace handle persistence via
- * IndexedDB, and permission management. Pure helpers are exported separately
- * so they can be unit-tested without a browser.
+ * Workspace web data layer (File System Access API, Chromium). Pure helpers
+ * are shared by both provider implementations; the IndexedDB handle
+ * persistence and permission helpers are web-only and used by providerWeb.
+ * Pure helpers are exported separately so they can be unit-tested without a
+ * browser.
  */
 
-import { isAbortError } from './fsAccess'
-
-export interface WorkspaceFileEntry {
-  kind: 'file'
-  name: string
-  handle: FileSystemFileHandle
-}
-
-export interface WorkspaceDirEntry {
-  kind: 'directory'
-  name: string
-  handle: FileSystemDirectoryHandle
-}
-
-export type WorkspaceEntry = WorkspaceFileEntry | WorkspaceDirEntry
+import type { WorkspaceEntry } from './fileProvider'
 
 /** directories that never belong in a document workspace tree */
 const IGNORED_DIRS = new Set(['node_modules', 'dist', 'target', '.git', '.svn', '.hg'])
@@ -38,30 +25,6 @@ export function sortEntries(entries: WorkspaceEntry[]): WorkspaceEntry[] {
     if (a.kind !== b.kind) return a.kind === 'directory' ? -1 : 1
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
   })
-}
-
-/** TS DOM lib lacks the async-iterator members on directory handles */
-type IterableDirectoryHandle = FileSystemDirectoryHandle & {
-  entries(): AsyncIterableIterator<
-    [string, FileSystemDirectoryHandle | FileSystemFileHandle]
-  >
-}
-
-/** List one directory's immediate entries, applying the ignore rules.
- * Markdown files keep their handles; other files are listed by name only. */
-export async function listDir(
-  dir: FileSystemDirectoryHandle,
-): Promise<WorkspaceEntry[]> {
-  const entries: WorkspaceEntry[] = []
-  for await (const [name, handle] of (dir as IterableDirectoryHandle).entries()) {
-    if (handle.kind === 'directory') {
-      if (isIgnoredDirName(name)) continue
-      entries.push({ kind: 'directory', name, handle })
-    } else {
-      entries.push({ kind: 'file', name, handle })
-    }
-  }
-  return sortEntries(entries)
 }
 
 // --- handle persistence (IndexedDB) --------------------------------------
@@ -119,27 +82,7 @@ export async function clearWorkspaceHandle(): Promise<void> {
   await withStore('readwrite', (store) => store.delete(KEY))
 }
 
-// --- picker & permissions -------------------------------------------------
-
-export function isWorkspaceSupported(): boolean {
-  return typeof window !== 'undefined' && 'showDirectoryPicker' in window
-}
-
-/** Ask the user to pick the workspace folder and remember it.
- * Returns null when the picker is cancelled. */
-export async function pickWorkspaceDir(): Promise<FileSystemDirectoryHandle | null> {
-  const picker = (window as unknown as {
-    showDirectoryPicker: (o?: unknown) => Promise<FileSystemDirectoryHandle>
-  }).showDirectoryPicker
-  try {
-    const dir = await picker({ id: 'ritedown-workspace', mode: 'readwrite' })
-    await saveWorkspaceHandle(dir)
-    return dir
-  } catch (err) {
-    if (isAbortError(err)) return null
-    throw err
-  }
-}
+// --- permissions ----------------------------------------------------------
 
 export type PermissionState = 'granted' | 'denied' | 'prompt'
 
@@ -159,12 +102,4 @@ export async function requestPermission(
   const request = handle.requestPermission?.bind(handle)
   if (!request) return 'denied'
   return (await request({ mode: 'readwrite' })) as PermissionState
-}
-
-/** Read a markdown file's text from its handle. */
-export async function readMarkdownFile(
-  handle: FileSystemFileHandle,
-): Promise<{ name: string; text: string }> {
-  const file = await handle.getFile()
-  return { name: file.name, text: await file.text() }
 }

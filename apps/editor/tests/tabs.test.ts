@@ -5,6 +5,7 @@ import {
   neighborTabId,
   type EditorTab,
 } from '../src/lib/tabs'
+import type { FileRef } from '../src/lib/fileProvider'
 
 function tabNamed(name: string): EditorTab {
   return makeTab({ name, text: `# ${name}` })
@@ -33,12 +34,13 @@ describe('neighborTabId', () => {
 })
 
 describe('findTabByHandle', () => {
-  it('matches by handle identity', () => {
-    const handle = {} as FileSystemFileHandle
-    const tab = makeTab({ name: 'a.md', text: '', handle })
+  it('matches by ref id, not object identity', () => {
+    const file: FileRef = { kind: 'file', id: 'a', name: 'a.md' }
+    const sameFile: FileRef = { kind: 'file', id: 'a', name: 'a.md' }
+    const tab = makeTab({ name: 'a.md', text: '', handle: file })
     const other = makeTab({ name: 'b.md', text: '' })
-    expect(findTabByHandle([tab, other], handle)).toBe(tab)
-    expect(findTabByHandle([tab, other], {} as FileSystemFileHandle)).toBeNull()
-    expect(findTabByHandle([other], handle)).toBeNull()
+    expect(findTabByHandle([tab, other], sameFile)).toBe(tab)
+    expect(findTabByHandle([tab, other], { kind: 'file', id: 'z', name: 'z.md' })).toBeNull()
+    expect(findTabByHandle([other], file)).toBeNull()
   })
 })

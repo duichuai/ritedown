@@ -4,7 +4,9 @@
  * file through a callback so the UI can update progressively.
  */
 
-import { isIgnoredDirName, isMarkdownName, listDir } from './workspace'
+import type { DirRef, FileRef } from './fileProvider'
+import { provider } from './provider'
+import { isMarkdownName } from './workspace'
 
 export interface SearchOptions {
   caseSensitive?: boolean
@@ -25,8 +27,8 @@ export interface SearchHit {
 export interface FileHits {
   /** path relative to the workspace root */
   path: string
-  handle: FileSystemFileHandle
-  parentDir: FileSystemDirectoryHandle
+  file: FileRef
+  parentDir: DirRef
   hits: SearchHit[]
 }
 
@@ -85,7 +87,7 @@ export function findMatches(
  * `onFile` as soon as it is scanned (batched, non-blocking). Returns false
  * early when `signal.stopped` flips true. */
 export async function searchWorkspace(
-  dir: FileSystemDirectoryHandle,
+  dir: DirRef,
   query: string,
   options: SearchOptions,
   onFile: (file: FileHits) => void,
@@ -94,7 +96,7 @@ export async function searchWorkspace(
   prefix = '',
 ): Promise<boolean> {
   if (!buildMatcher(query, options)) return true
-  for (const entry of await listDir(dir)) {
+  for (const entry of await provider.listDir(dir)) {
     if (signal.stopped) return false
     if (entry.kind === 'directory') {
       const ok = await searchWorkspace(
@@ -107,12 +109,12 @@ export async function searchWorkspace(
       )
       if (!ok) return false
     } else if (isMarkdownName(entry.name)) {
-      const text = await (await entry.handle.getFile()).text()
+      const { text } = await provider.readDoc(entry.handle)
       const hits = findMatches(text, query, options)
       if (hits.length) {
         onFile({
           path: `${prefix}${entry.name}`,
-          handle: entry.handle,
+          file: entry.handle,
           parentDir: dir,
           hits,
         })

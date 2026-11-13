@@ -1,11 +1,15 @@
 /**
  * Relative-path image preview. Browsers resolve <img src> against the app
  * origin, so relative images in an opened markdown file can't load directly.
- * The user picks the document's folder once (File System Access API) and we
- * resolve relative srcs against it via object URLs.
+ * The user picks the document's folder once and we resolve relative srcs
+ * against it via object URLs; asset reads/writes go through the FileProvider
+ * so both the web (FSA handles) and desktop (paths) work the same way.
  */
 
-let baseDir: FileSystemDirectoryHandle | null = null
+import type { DirRef, FileRef } from './fileProvider'
+import { provider } from './provider'
+
+let baseDir: DirRef | null = null
 
 /** true when src should be resolved against the document folder
  * (no scheme, not root-relative) */
@@ -17,26 +21,18 @@ export function hasBaseDir(): boolean {
   return baseDir !== null
 }
 
-export function setBaseDir(handle: FileSystemDirectoryHandle | null): void {
-  baseDir = handle
+export function setBaseDir(dir: DirRef | null): void {
+  baseDir = dir
 }
 
 /** Ask the user to pick the document's folder. Read/write so pasted images
  * can be copied next to the document. */
 export async function pickBaseDir(
-  startIn?: FileSystemFileHandle,
-): Promise<FileSystemDirectoryHandle | null> {
-  const picker = window.showDirectoryPicker
-  if (!picker) return null
-  try {
-    const options: Record<string, unknown> = { mode: 'readwrite' }
-    if (startIn) options.startIn = startIn
-    baseDir = await picker(options)
-    return baseDir
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') return null
-    throw err
-  }
+  startIn?: FileRef | null,
+): Promise<DirRef | null> {
+  const dir = await provider.pickDocDir(startIn)
+  if (dir) baseDir = dir
+  return dir
 }
 
 /** Copy an image blob into the base dir (creating subfolders), used for
@@ -46,17 +42,7 @@ export async function writeImageToBaseDir(
   file: Blob,
 ): Promise<void> {
   if (!baseDir) throw new Error('no base directory picked')
-  const segments = path.split('/').filter(Boolean)
-  const name = segments.pop()
-  if (!name) throw new Error('empty image path')
-  let dir = baseDir
-  for (const segment of segments) {
-    dir = await dir.getDirectoryHandle(segment, { create: true })
-  }
-  const handle = await dir.getFileHandle(name, { create: true })
-  const writable = await handle.createWritable()
-  await writable.write(file)
-  await writable.close()
+  await provider.writeAsset(baseDir, path, file)
 }
 
 // object URLs are cached per base-dir + relative path so keystroke re-renders
@@ -64,30 +50,7 @@ export async function writeImageToBaseDir(
 const urlCache = new Map<string, string>()
 
 function cacheKey(path: string): string {
-  return `${baseDir?.name ?? ''}:${path}`
-}
-
-async function resolveFile(path: string): Promise<File | null> {
-  if (!baseDir) return null
-  const segments = path.split('/').filter((s) => s && s !== '.')
-  const name = segments.pop()
-  if (!name) return null
-  // ascending above the picked folder is not possible without parent access
-  let dir = baseDir
-  for (const segment of segments) {
-    if (segment === '..') return null
-    try {
-      dir = await dir.getDirectoryHandle(segment)
-    } catch {
-      return null
-    }
-  }
-  try {
-    const handle = await dir.getFileHandle(name)
-    return await handle.getFile()
-  } catch {
-    return null
-  }
+  return `${baseDir?.id ?? ''}:${path}`
 }
 
 /** Resolve every relative-path <img> under root against the base dir.
@@ -107,12 +70,12 @@ export async function resolveRelativeImages(
     const key = cacheKey(src)
     let url = urlCache.get(key)
     if (!url) {
-      const file = await resolveFile(src)
-      if (!file) {
+      const blob = await provider.readAsset(baseDir, src)
+      if (!blob) {
         pending = true
         continue
       }
-      url = URL.createObjectURL(file)
+      url = URL.createObjectURL(blob)
       urlCache.set(key, url)
     }
     img.src = url
