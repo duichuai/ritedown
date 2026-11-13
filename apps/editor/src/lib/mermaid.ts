@@ -1,3 +1,5 @@
+import { isDark } from './theme'
+
 type Mermaid = typeof import('mermaid').default
 
 /**
@@ -8,12 +10,8 @@ type Mermaid = typeof import('mermaid').default
 let mermaidPromise: Promise<Mermaid> | null = null
 let loadedTheme = ''
 
-function prefersDark(): boolean {
-  return matchMedia('(prefers-color-scheme: dark)').matches
-}
-
 function loadMermaid(): Promise<Mermaid> {
-  const theme = prefersDark() ? 'dark' : 'default'
+  const theme = isDark() ? 'dark' : 'default'
   if (mermaidPromise && loadedTheme === theme) return mermaidPromise
   loadedTheme = theme
   mermaidPromise = import('mermaid').then((m) => {

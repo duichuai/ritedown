@@ -11,6 +11,7 @@ import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
 import { buildToc } from './lib/toc'
 import { wordCount } from './lib/wordCount'
 import { locale, t, toggleLocale } from './lib/i18n'
+import { cycleTheme, themePref } from './lib/theme'
 import {
   isAbortError,
   isFsAccessSupported,
@@ -36,13 +37,21 @@ const dirty = computed(() => markdown.value !== savedContent.value)
 async function onOpen() {
   try {
     const file = await openMarkdownFile()
-    markdown.value = file.text
-    savedContent.value = file.text
-    fileName.value = file.name
-    fileHandle.value = file.handle
+    applyOpenedFile(file.name, file.text, file.handle)
   } catch (err) {
     if (!isAbortError(err)) console.warn('open failed:', err)
   }
+}
+
+function applyOpenedFile(
+  name: string,
+  text: string,
+  handle: FileSystemFileHandle | null,
+) {
+  markdown.value = text
+  savedContent.value = text
+  fileName.value = name
+  fileHandle.value = handle
 }
 
 async function onSave() {
@@ -56,6 +65,71 @@ async function onSave() {
     fileName.value = file.name
   } catch (err) {
     if (!isAbortError(err)) console.warn('save failed:', err)
+  }
+}
+
+async function onSaveAs() {
+  try {
+    const handle = await pickSaveHandle(fileName.value ?? t('untitled'))
+    await saveToHandle(handle, markdown.value)
+    fileHandle.value = handle
+    savedContent.value = markdown.value
+    const file = await handle.getFile()
+    fileName.value = file.name
+  } catch (err) {
+    if (!isAbortError(err)) console.warn('save as failed:', err)
+  }
+}
+
+// drag & drop open
+type DataTransferItemWithHandle = DataTransferItem & {
+  getAsFileSystemHandle?: () => Promise<FileSystemFileHandle | null>
+}
+
+const dragging = ref(false)
+let dragDepth = 0
+
+function isMarkdownName(name: string): boolean {
+  return /\.(md|markdown)$/i.test(name)
+}
+
+async function openDroppedFile(handle: FileSystemFileHandle, file: File) {
+  const text = await file.text()
+  applyOpenedFile(handle.name, text, handle)
+}
+
+async function onDrop(e: DragEvent) {
+  dragDepth = 0
+  dragging.value = false
+  // Chromium: dropped files can yield a real file handle for later saves
+  const items = e.dataTransfer?.items
+  if (items) {
+    for (const item of items) {
+      if (item.kind !== 'file') continue
+      const withHandle = item as DataTransferItemWithHandle
+      if (withHandle.getAsFileSystemHandle) {
+        const handle = await withHandle.getAsFileSystemHandle()
+        if (handle && 'getFile' in handle && isMarkdownName(handle.name)) {
+          try {
+            await openDroppedFile(handle, await handle.getFile())
+            return
+          } catch (err) {
+            console.warn('drop open failed:', err)
+          }
+        }
+      }
+    }
+  }
+  // fallback: plain File API (Firefox/Safari, no handle -> saves via Save As)
+  const file = Array.from(e.dataTransfer?.files ?? []).find((f) =>
+    isMarkdownName(f.name),
+  )
+  if (!file) return
+  try {
+    const text = await file.text()
+    applyOpenedFile(file.name, text, null)
+  } catch (err) {
+    console.warn('drop open failed:', err)
   }
 }
 
@@ -78,6 +152,14 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
 
 const editorPane = ref<InstanceType<typeof EditorPane> | null>(null)
 const previewPane = ref<InstanceType<typeof PreviewPane> | null>(null)
+
+const themeLabel = computed(() =>
+  themePref.value === 'auto'
+    ? t('themeAuto')
+    : themePref.value === 'light'
+      ? t('themeLight')
+      : t('themeDark'),
+)
 
 // outline (TOC)
 const tocVisible = ref(true)
@@ -156,7 +238,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app">
+  <div
+    class="app"
+    @dragenter.prevent="dragDepth++; dragging = true"
+    @dragover.prevent
+    @dragleave="dragDepth = Math.max(0, dragDepth - 1); dragging = dragDepth > 0"
+    @drop.prevent="onDrop"
+  >
+    <div v-if="dragging" class="drop-overlay">{{ t('dropToOpen') }}</div>
     <header class="titlebar">
       <span class="brand">Ritedown</span>
       <span v-if="fileName" class="filename">{{ fileName }}</span>
@@ -166,7 +255,11 @@ onBeforeUnmount(() => {
         <template v-if="fsSupported">
           <button class="tb-btn" @click="onOpen">{{ t('open') }}</button>
           <button class="tb-btn" @click="onSave">{{ t('save') }}</button>
+          <button class="tb-btn" @click="onSaveAs">{{ t('saveAs') }}</button>
         </template>
+        <button class="tb-btn" :title="t('theme')" @click="cycleTheme">
+          {{ themeLabel }}
+        </button>
         <button class="tb-btn tb-lang" :title="t('switchLang')" @click="toggleLocale">
           {{ locale === 'zh' ? 'EN' : '中文' }}
         </button>

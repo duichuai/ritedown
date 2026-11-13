@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --bg: #ffffff;
   --bg-soft: #f6f8fa;
   --fg: #1f2328;
@@ -8,8 +8,11 @@
   --accent: #0969da;
 }
 
+/* dark palette, applied via data-theme (theme.ts resolves auto + system sync);
+   the media query covers only the pre-JS first paint */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
+    color-scheme: dark;
     --bg: #0d1117;
     --bg-soft: #151b23;
     --fg: #f0f6fc;
@@ -17,6 +20,16 @@
     --border: #3d444d;
     --accent: #4493f8;
   }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --bg-soft: #151b23;
+  --fg: #f0f6fc;
+  --fg-soft: #9198a1;
+  --border: #3d444d;
+  --accent: #4493f8;
 }
 
 * {
@@ -86,6 +99,21 @@ body {
 
 .tb-btn:hover {
   background: var(--bg-soft);
+}
+
+/* drag & drop open overlay */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  border: 2px dashed var(--accent);
+  pointer-events: none;
 }
 
 .split {
@@ -275,23 +303,21 @@ body {
   margin-bottom: 4px;
 }
 
-/* Shiki dual themes: inline vars carry both palettes, switch via media query */
+/* Shiki dual themes: inline vars carry both palettes, switch via data-theme */
 .prose pre.shiki {
   padding: 12px 16px;
   border-radius: 6px;
   overflow: auto;
 }
 
-@media (prefers-color-scheme: dark) {
-  .prose pre.shiki,
-  .prose pre.shiki span {
-    color: var(--shiki-dark) !important;
-    background-color: transparent !important;
-  }
+:root[data-theme='dark'] .prose pre.shiki,
+:root[data-theme='dark'] .prose pre.shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: transparent !important;
+}
 
-  .prose pre.shiki {
-    background-color: var(--bg-soft) !important;
-  }
+:root[data-theme='dark'] .prose pre.shiki {
+  background-color: var(--bg-soft) !important;
 }
 
 /* KaTeX */
