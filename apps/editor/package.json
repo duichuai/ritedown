@@ -1,7 +1,7 @@
 {
   "name": "@ritedown/editor",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Ritedown web editor: source editing + live split preview",
   "license": "MIT",
   "author": "duichuai",
