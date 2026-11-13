@@ -6,8 +6,8 @@ describe('buildToc', () => {
     const toc = buildToc('# Title\n\npara\n\n## Section A\n\n### Deep\n')
     expect(toc).toEqual([
       { depth: 1, text: 'Title', line: 1 },
-      { depth: 2, text: 'Section A', line: 3 },
-      { depth: 3, text: 'Deep', line: 5 },
+      { depth: 2, text: 'Section A', line: 5 },
+      { depth: 3, text: 'Deep', line: 7 },
     ])
   })
 
