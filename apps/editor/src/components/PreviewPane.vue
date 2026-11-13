@@ -1,7 +1,37 @@
 <script setup lang="ts">
-defineProps<{ html: string }>()
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { highlightCodeBlocks } from '../lib/highlight'
+import { renderMermaidBlocks } from '../lib/mermaid'
+
+const props = defineProps<{ html: string }>()
+
+const host = ref<HTMLElement | null>(null)
+
+async function decorate() {
+  const root = host.value
+  if (!root) return
+  await Promise.all([highlightCodeBlocks(root), renderMermaidBlocks(root)])
+}
+
+// re-render after the v-html DOM update
+watch(() => props.html, decorate, { flush: 'post' })
+
+// re-run mermaid (theme is baked into the SVG); shiki handles dark mode via CSS
+const schemeTick = ref(0)
+const scheme = matchMedia('(prefers-color-scheme: dark)')
+const onSchemeChange = () => schemeTick.value++
+scheme.addEventListener('change', onSchemeChange)
+watch(schemeTick, () => {
+  const root = host.value
+  if (!root) return
+  root.innerHTML = props.html
+  void decorate()
+})
+onBeforeUnmount(() => scheme.removeEventListener('change', onSchemeChange))
+
+onMounted(decorate)
 </script>
 
 <template>
-  <section class="pane preview-pane prose" v-html="html"></section>
+  <section class="pane preview-pane prose" ref="host" v-html="html"></section>
 </template>

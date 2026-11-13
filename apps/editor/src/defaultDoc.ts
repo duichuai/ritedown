@@ -36,4 +36,24 @@ rite (write) + down (markdown) — write it down.
 
 > [!WARNING]
 > 注意渲染效果。
+
+## 代码高亮（Shiki）
+
+\`\`\`ts
+// 双主题高亮，跟随系统亮暗切换
+export function greet(name: string): string {
+  return \`Hello, \${name}!\`
+}
+\`\`\`
+
+## 图表（Mermaid）
+
+\`\`\`mermaid
+flowchart LR
+  A[输入 Markdown] --> B{渲染管线}
+  B --> C[代码高亮]
+  B --> D[图表]
+  B --> E[预览]
+\`\`\`
+
 `

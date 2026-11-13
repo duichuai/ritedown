@@ -172,3 +172,35 @@ body {
   font-weight: 600;
   margin-bottom: 4px;
 }
+
+/* Shiki dual themes: inline vars carry both palettes, switch via media query */
+.prose pre.shiki {
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .prose pre.shiki,
+  .prose pre.shiki span {
+    color: var(--shiki-dark) !important;
+    background-color: transparent !important;
+  }
+
+  .prose pre.shiki {
+    background-color: var(--bg-soft) !important;
+  }
+}
+
+/* Mermaid diagrams */
+.prose svg {
+  max-width: 100%;
+}
+
+.prose .mermaid-error {
+  border: 1px solid #f85149;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #f85149;
+  white-space: pre-wrap;
+}
