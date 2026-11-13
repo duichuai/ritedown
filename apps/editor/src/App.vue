@@ -8,6 +8,13 @@ import { DEFAULT_DOC } from './defaultDoc'
 import { remarkMathToCode } from './lib/mathPlugin'
 import { remarkLineMarkers } from './lib/lineMarkers'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
+import {
+  isAbortError,
+  isFsAccessSupported,
+  openMarkdownFile,
+  pickSaveHandle,
+  saveToHandle,
+} from './lib/fsAccess'
 
 const markdown = ref(DEFAULT_DOC)
 
@@ -16,6 +23,55 @@ const html = computed(() =>
     extensions: [builtin.gfm, remarkMath, remarkMathToCode, remarkLineMarkers],
   }),
 )
+
+const fsSupported = isFsAccessSupported()
+const fileName = ref<string | null>(null)
+const fileHandle = ref<FileSystemFileHandle | null>(null)
+const savedContent = ref(DEFAULT_DOC)
+const dirty = computed(() => markdown.value !== savedContent.value)
+
+async function onOpen() {
+  try {
+    const file = await openMarkdownFile()
+    markdown.value = file.text
+    savedContent.value = file.text
+    fileName.value = file.name
+    fileHandle.value = file.handle
+  } catch (err) {
+    if (!isAbortError(err)) console.warn('open failed:', err)
+  }
+}
+
+async function onSave() {
+  try {
+    if (!fileHandle.value) {
+      fileHandle.value = await pickSaveHandle(fileName.value ?? '未命名.md')
+    }
+    await saveToHandle(fileHandle.value, markdown.value)
+    savedContent.value = markdown.value
+    const file = await fileHandle.value.getFile()
+    fileName.value = file.name
+  } catch (err) {
+    if (!isAbortError(err)) console.warn('save failed:', err)
+  }
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault()
+    void onSave()
+  }
+}
+
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (dirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
 
 const editorPane = ref<InstanceType<typeof EditorPane> | null>(null)
 const previewPane = ref<InstanceType<typeof PreviewPane> | null>(null)
@@ -76,7 +132,15 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="app">
-    <header class="titlebar">Ritedown</header>
+    <header class="titlebar">
+      <span class="brand">Ritedown</span>
+      <span v-if="fileName" class="filename">{{ fileName }}</span>
+      <span v-if="dirty" class="dirty-dot" title="有未保存的更改">●</span>
+      <div v-if="fsSupported" class="titlebar-actions">
+        <button class="tb-btn" @click="onOpen">打开</button>
+        <button class="tb-btn" @click="onSave">保存</button>
+      </div>
+    </header>
     <main class="split">
       <EditorPane ref="editorPane" v-model="markdown" />
       <PreviewPane ref="previewPane" :html="html" />

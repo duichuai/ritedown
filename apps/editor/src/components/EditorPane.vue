@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
 import { markdown } from '@codemirror/lang-markdown'
 
@@ -25,6 +25,18 @@ onMounted(() => {
     parent: host.value!,
   })
 })
+
+// external doc changes (e.g. opening a file) replace the CM document
+watch(
+  () => props.modelValue,
+  (value) => {
+    if (view && value !== view.state.doc.toString()) {
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: value },
+      })
+    }
+  },
+)
 
 onBeforeUnmount(() => view?.destroy())
 
