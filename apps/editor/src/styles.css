@@ -101,6 +101,12 @@ body {
   background: var(--bg-soft);
 }
 
+.tb-btn.tb-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg);
+}
+
 /* drag & drop open overlay */
 .drop-overlay {
   position: fixed;

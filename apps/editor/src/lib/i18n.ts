@@ -43,6 +43,7 @@ export const messages = {
     themeDark: '暗色',
     pickImageDir: '选择文件夹以预览相对路径图片',
     export: '导出 HTML',
+    wysiwyg: '所见即所得',
     switchLang: 'Switch to English',
   },
   en: {
@@ -65,6 +66,7 @@ export const messages = {
     themeDark: 'Dark',
     pickImageDir: 'Choose the document folder to preview relative images',
     export: 'Export HTML',
+    wysiwyg: 'WYSIWYG',
     switchLang: '切换到中文',
   },
 } as const

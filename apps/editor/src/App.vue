@@ -200,6 +200,29 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+// WYSIWYG preference (default on; markers hidden outside the cursor span)
+const WYSIWYG_KEY = 'ritedown-wysiwyg'
+const wysiwyg = ref(loadWysiwygPref())
+
+function loadWysiwygPref(): boolean {
+  try {
+    const saved = localStorage.getItem(WYSIWYG_KEY)
+    if (saved !== null) return saved === '1'
+  } catch {
+    // no localStorage (SSR / tests)
+  }
+  return true
+}
+
+function toggleWysiwyg(): void {
+  wysiwyg.value = !wysiwyg.value
+  try {
+    localStorage.setItem(WYSIWYG_KEY, wysiwyg.value ? '1' : '0')
+  } catch {
+    // no localStorage
+  }
+}
+
 function onBeforeUnload(e: BeforeUnloadEvent) {
   if (dirty.value) {
     e.preventDefault()
@@ -318,6 +341,14 @@ onBeforeUnmount(() => {
           <button class="tb-btn" @click="onSaveAs">{{ t('saveAs') }}</button>
         </template>
         <button class="tb-btn" @click="onExportHtml">{{ t('export') }}</button>
+        <button
+          class="tb-btn"
+          :class="{ 'tb-active': wysiwyg }"
+          :title="t('wysiwyg')"
+          @click="toggleWysiwyg"
+        >
+          {{ t('wysiwyg') }}
+        </button>
         <button class="tb-btn" :title="t('theme')" @click="cycleTheme">
           {{ themeLabel }}
         </button>
@@ -348,6 +379,7 @@ onBeforeUnmount(() => {
       <EditorPane
         ref="editorPane"
         v-model="markdown"
+        :wysiwyg="wysiwyg"
         @cursor-line="cursorLine = $event"
         @cursor-col="cursorCol = $event"
         @image-file="onImageFile"

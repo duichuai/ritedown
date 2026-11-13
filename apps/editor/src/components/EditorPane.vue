@@ -2,8 +2,10 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
 import { markdown } from '@codemirror/lang-markdown'
+import { Compartment } from '@codemirror/state'
+import { wysiwygExtension } from '../lib/wysiwyg'
 
-const props = defineProps<{ modelValue: string }>()
+const props = defineProps<{ modelValue: string; wysiwyg?: boolean }>()
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   'cursor-line': [line: number]
@@ -13,6 +15,8 @@ const emit = defineEmits<{
 
 const host = ref<HTMLElement | null>(null)
 let view: EditorView | null = null
+
+const wysiwygCompartment = new Compartment()
 
 function isImageFile(file: File | null | undefined): boolean {
   return !!file && file.type.startsWith('image/')
@@ -47,6 +51,7 @@ onMounted(() => {
       basicSetup,
       markdown(),
       EditorView.lineWrapping,
+      wysiwygCompartment.of(props.wysiwyg ? wysiwygExtension() : []),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           emit('update:modelValue', update.state.doc.toString())
@@ -74,6 +79,16 @@ watch(
         changes: { from: 0, to: view.state.doc.length, insert: value },
       })
     }
+  },
+)
+
+// toggle WYSIWYG at runtime without recreating the view
+watch(
+  () => props.wysiwyg,
+  (enabled) => {
+    view?.dispatch({
+      effects: wysiwygCompartment.reconfigure(enabled ? wysiwygExtension() : []),
+    })
   },
 )
 
