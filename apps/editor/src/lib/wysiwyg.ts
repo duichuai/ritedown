@@ -14,12 +14,14 @@ import {
   type DecorationSet,
   type ViewUpdate,
 } from '@codemirror/view'
+import { blockWysiwygExtension } from './wysiwygBlocks'
 
 /** inline container nodes whose markers we hide, mapped to a style class */
 const STYLE_CLASS: Record<string, string> = {
   StrongEmphasis: 'cm-md-strong',
   Emphasis: 'cm-md-em',
   InlineCode: 'cm-md-code',
+  Strikethrough: 'cm-md-strike',
 }
 
 const hideMark = Decoration.replace({})
@@ -82,10 +84,12 @@ const inlineWysiwygPlugin = ViewPlugin.fromClass(
   { decorations: (plugin) => plugin.decorations },
 )
 
-/** inline-format WYSIWYG extensions: hidden markers + preview-like styling */
+/** inline-format WYSIWYG extensions: hidden markers + preview-like styling.
+ * Also carries phase 2 (block-level) rendering behind the same toggle. */
 export function wysiwygExtension(): Extension {
   return [
     inlineWysiwygPlugin,
+    blockWysiwygExtension(),
     EditorView.baseTheme({
       '.cm-md-strong': { fontWeight: 'bold' },
       '.cm-md-em': { fontStyle: 'italic' },
@@ -95,6 +99,7 @@ export function wysiwygExtension(): Extension {
         backgroundColor: 'rgba(127, 127, 127, 0.12)',
         borderRadius: '3px',
       },
+      '.cm-md-strike': { textDecoration: 'line-through' },
     }),
   ]
 }

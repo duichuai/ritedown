@@ -33,6 +33,17 @@ function getHighlighter(): Promise<HighlighterCore> {
   return highlighterPromise
 }
 
+const KNOWN_LANGS = [
+  'markdown',
+  'javascript',
+  'typescript',
+  'json',
+  'bash',
+  'yaml',
+  'html',
+  'css',
+]
+
 const LANG_ALIASES: Record<string, string> = {
   md: 'markdown',
   js: 'javascript',
@@ -40,6 +51,25 @@ const LANG_ALIASES: Record<string, string> = {
   sh: 'bash',
   shell: 'bash',
   yml: 'yaml',
+}
+
+/** Highlight a code string to Shiki HTML (dual theme), or null when the
+ * language is unknown/unsupported — callers fall back to plain code. */
+export async function highlightCodeToHtml(
+  code: string,
+  lang: string,
+): Promise<string | null> {
+  const known = LANG_ALIASES[lang] ?? lang
+  if (!KNOWN_LANGS.includes(known)) return null
+  try {
+    const highlighter = await getHighlighter()
+    return highlighter.codeToHtml(code, {
+      lang: known,
+      themes: { light: 'github-light', dark: 'github-dark' },
+    })
+  } catch {
+    return null // highlighting must never break the editor
+  }
 }
 
 /** Find fenced code blocks in rendered HTML and highlight them in place. */

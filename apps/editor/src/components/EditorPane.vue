@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
-import { markdown } from '@codemirror/lang-markdown'
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { Compartment } from '@codemirror/state'
 import { wysiwygExtension } from '../lib/wysiwyg'
 
@@ -49,7 +49,9 @@ onMounted(() => {
     doc: props.modelValue,
     extensions: [
       basicSetup,
-      markdown(),
+      // base: markdownLanguage = CommonMark + GFM (tables, task lists),
+      // so block-level WYSIWYG sees Table/Task nodes in the syntax tree
+      markdown({ base: markdownLanguage }),
       EditorView.lineWrapping,
       wysiwygCompartment.of(props.wysiwyg ? wysiwygExtension() : []),
       EditorView.updateListener.of((update) => {
