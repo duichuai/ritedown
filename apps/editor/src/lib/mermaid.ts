@@ -44,7 +44,14 @@ export async function renderMermaidBlocks(root: ParentNode): Promise<void> {
           `ritedown-mermaid-${++counter}`,
           code.textContent ?? '',
         )
-        if (code.isConnected) pre.outerHTML = svg
+        if (code.isConnected) {
+          const line = pre.getAttribute('data-md-line')
+          const tmpl = document.createElement('template')
+          tmpl.innerHTML = svg
+          const svgEl = tmpl.content.firstElementChild as HTMLElement
+          if (line) svgEl.setAttribute('data-md-line', line)
+          pre.replaceWith(svgEl)
+        }
       } catch (err) {
         pre.classList.add('mermaid-error')
         const message = document.createElement('code')

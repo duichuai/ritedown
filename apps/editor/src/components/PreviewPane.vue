@@ -35,6 +35,13 @@ watch(schemeTick, () => {
 onBeforeUnmount(() => scheme.removeEventListener('change', onSchemeChange))
 
 onMounted(decorate)
+
+defineExpose({
+  /** the scrollable preview element, for scroll sync */
+  get host(): HTMLElement | null {
+    return host.value
+  },
+})
 </script>
 
 <template>

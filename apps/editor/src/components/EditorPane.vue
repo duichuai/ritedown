@@ -27,6 +27,13 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => view?.destroy())
+
+defineExpose({
+  /** the CodeMirror view, for scroll sync and programmatic access */
+  get view(): EditorView | null {
+    return view
+  },
+})
 </script>
 
 <template>

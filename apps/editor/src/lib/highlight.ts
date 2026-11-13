@@ -70,7 +70,14 @@ export async function highlightCodeBlocks(root: ParentNode): Promise<void> {
           lang,
           themes: { light: 'github-light', dark: 'github-dark' },
         })
-        if (code.isConnected) pre.outerHTML = html
+        if (code.isConnected) {
+          const line = pre.getAttribute('data-md-line')
+          const tmpl = document.createElement('template')
+          tmpl.innerHTML = html
+          const replacement = tmpl.content.firstElementChild as HTMLElement
+          if (line) replacement.setAttribute('data-md-line', line)
+          pre.replaceWith(replacement)
+        }
       } catch {
         // highlighting must never break the preview
         delete pre.dataset.shiki

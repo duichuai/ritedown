@@ -31,6 +31,12 @@ export async function renderMathBlocks(root: ParentNode): Promise<void> {
     const holder = document.createElement(isDisplay ? 'div' : 'span')
     holder.innerHTML = html
     const target = isDisplay ? code.parentElement! : code
-    target.replaceWith(...Array.from(holder.childNodes))
+    const nodes = Array.from(holder.childNodes)
+    // display math replaces a <pre> that carries the scroll-sync marker
+    if (isDisplay && nodes[0] instanceof HTMLElement) {
+      const line = target.getAttribute('data-md-line')
+      if (line) nodes[0].setAttribute('data-md-line', line)
+    }
+    target.replaceWith(...nodes)
   }
 }
