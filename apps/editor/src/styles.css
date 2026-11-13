@@ -192,6 +192,12 @@ body {
   }
 }
 
+/* KaTeX */
+.prose .katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+}
+
 /* Mermaid diagrams */
 .prose svg {
   max-width: 100%;

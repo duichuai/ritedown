@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { builtin, render } from '@ritedown/core'
+import remarkMath from 'remark-math'
 import EditorPane from './components/EditorPane.vue'
 import PreviewPane from './components/PreviewPane.vue'
 import { DEFAULT_DOC } from './defaultDoc'
+import { remarkMathToCode } from './lib/mathPlugin'
 
 const markdown = ref(DEFAULT_DOC)
 
 const html = computed(() =>
-  render(markdown.value, { extensions: [builtin.gfm] }),
+  render(markdown.value, {
+    extensions: [builtin.gfm, remarkMath, remarkMathToCode],
+  }),
 )
 </script>
 

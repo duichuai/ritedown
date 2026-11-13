@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { highlightCodeBlocks } from '../lib/highlight'
 import { renderMermaidBlocks } from '../lib/mermaid'
+import { renderMathBlocks } from '../lib/math'
 
 const props = defineProps<{ html: string }>()
 
@@ -10,7 +11,11 @@ const host = ref<HTMLElement | null>(null)
 async function decorate() {
   const root = host.value
   if (!root) return
-  await Promise.all([highlightCodeBlocks(root), renderMermaidBlocks(root)])
+  await Promise.all([
+    highlightCodeBlocks(root),
+    renderMermaidBlocks(root),
+    renderMathBlocks(root),
+  ])
 }
 
 // re-render after the v-html DOM update

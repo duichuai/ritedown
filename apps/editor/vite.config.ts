@@ -1,8 +1,21 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: [
+      {
+        // drop micromark-extension-math's html.js (static katex import,
+        // unused here) to keep katex lazy: resolve to syntax.js directly
+        find: /^micromark-extension-math$/,
+        replacement: fileURLToPath(
+          new URL('../../node_modules/micromark-extension-math/lib/syntax.js', import.meta.url),
+        ),
+      },
+    ],
+  },
   build: {
     // Only @mermaid-js/parser (mermaid's own cohesive parser package, lazy-
     // loaded with diagram types that need it) exceeds the default limit.

@@ -46,6 +46,14 @@ export function greet(name: string): string {
 }
 \`\`\`
 
+## 数学公式（KaTeX）
+
+行内公式 $E = mc^2$，块级公式：
+
+$$
+\\int_0^\\infty e^{-x^2} \\, dx = \\frac{\\sqrt{\\pi}}{2}
+$$
+
 ## 图表（Mermaid）
 
 \`\`\`mermaid

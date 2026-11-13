@@ -22,7 +22,9 @@
     "@ritedown/core": "workspace:*",
     "codemirror": "^6.0.1",
     "@codemirror/lang-markdown": "^6.3.0",
+    "katex": "^0.16.0",
     "mermaid": "^11.4.0",
+    "remark-math": "^6.0.0",
     "shiki": "^3.0.0",
     "vue": "^3.5.0"
   },
