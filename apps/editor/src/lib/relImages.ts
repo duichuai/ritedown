@@ -21,14 +21,15 @@ export function setBaseDir(handle: FileSystemDirectoryHandle | null): void {
   baseDir = handle
 }
 
-/** Ask the user to pick the document's folder (Chromium only). */
+/** Ask the user to pick the document's folder. Read/write so pasted images
+ * can be copied next to the document. */
 export async function pickBaseDir(
   startIn?: FileSystemFileHandle,
 ): Promise<FileSystemDirectoryHandle | null> {
   const picker = window.showDirectoryPicker
   if (!picker) return null
   try {
-    const options: Record<string, unknown> = { mode: 'read' }
+    const options: Record<string, unknown> = { mode: 'readwrite' }
     if (startIn) options.startIn = startIn
     baseDir = await picker(options)
     return baseDir
@@ -36,6 +37,26 @@ export async function pickBaseDir(
     if (err instanceof DOMException && err.name === 'AbortError') return null
     throw err
   }
+}
+
+/** Copy an image blob into the base dir (creating subfolders), used for
+ * pasted/dropped images. */
+export async function writeImageToBaseDir(
+  path: string,
+  file: Blob,
+): Promise<void> {
+  if (!baseDir) throw new Error('no base directory picked')
+  const segments = path.split('/').filter(Boolean)
+  const name = segments.pop()
+  if (!name) throw new Error('empty image path')
+  let dir = baseDir
+  for (const segment of segments) {
+    dir = await dir.getDirectoryHandle(segment, { create: true })
+  }
+  const handle = await dir.getFileHandle(name, { create: true })
+  const writable = await handle.createWritable()
+  await writable.write(file)
+  await writable.close()
 }
 
 // object URLs are cached per base-dir + relative path so keystroke re-renders

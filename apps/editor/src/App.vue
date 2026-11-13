@@ -10,7 +10,13 @@ import { DEFAULT_DOC } from './defaultDoc'
 import { remarkFrontmatterTable } from './lib/frontmatter'
 import { remarkMathToCode } from './lib/mathPlugin'
 import { remarkLineMarkers } from './lib/lineMarkers'
-import { exportHtml } from './lib/exportHtml'
+import { exportHtml, blobToDataUrl } from './lib/exportHtml'
+import { imageAssetPath, imageMarkdown } from './lib/imageInsert'
+import {
+  hasBaseDir,
+  pickBaseDir,
+  writeImageToBaseDir,
+} from './lib/relImages'
 import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
 import { buildToc } from './lib/toc'
 import { wordCount } from './lib/wordCount'
@@ -157,6 +163,34 @@ async function onExportHtml() {
   } catch (err) {
     if (!isAbortError(err)) console.warn('export failed:', err)
   }
+}
+
+async function onImageFile(file: File) {
+  const path = imageAssetPath(file.name)
+  const md = imageMarkdown(file.name, path)
+  const writeAndInsert = async (): Promise<boolean> => {
+    try {
+      await writeImageToBaseDir(path, file)
+      editorPane.value?.insertText(md)
+      return true
+    } catch (err) {
+      console.warn('image write failed:', err)
+      return true // already have a folder; don't fall back silently
+    }
+  }
+  if (hasBaseDir()) {
+    await writeAndInsert()
+    return
+  }
+  if (isFsAccessSupported()) {
+    const dir = await pickBaseDir(fileHandle.value ?? undefined)
+    if (dir && (await writeAndInsert())) return
+    if (dir) return
+    // user cancelled the picker — fall through to the embedded fallback
+  }
+  // no File System Access API: embed the image so the preview still shows it
+  const dataUrl = await blobToDataUrl(file)
+  editorPane.value?.insertText(imageMarkdown(file.name, dataUrl))
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -316,6 +350,7 @@ onBeforeUnmount(() => {
         v-model="markdown"
         @cursor-line="cursorLine = $event"
         @cursor-col="cursorCol = $event"
+        @image-file="onImageFile"
       />
       <PreviewPane ref="previewPane" :html="html" :file-handle="fileHandle" />
     </main>

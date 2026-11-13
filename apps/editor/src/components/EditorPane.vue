@@ -8,10 +8,37 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   'cursor-line': [line: number]
   'cursor-col': [column: number]
+  'image-file': [file: File]
 }>()
 
 const host = ref<HTMLElement | null>(null)
 let view: EditorView | null = null
+
+function isImageFile(file: File | null | undefined): boolean {
+  return !!file && file.type.startsWith('image/')
+}
+
+/** collect image files from a paste/drop transfer (ignore text items) */
+function imageFilesFrom(transfer: DataTransfer | null): File[] {
+  return Array.from(transfer?.files ?? []).filter(isImageFile)
+}
+
+function onPaste(e: ClipboardEvent) {
+  const images = imageFilesFrom(e.clipboardData)
+  if (!images.length) return
+  // keep only the image out of the paste (a copied screenshot may also
+  // carry HTML/text fragments we don't want)
+  e.preventDefault()
+  images.forEach((file) => emit('image-file', file))
+}
+
+function onDrop(e: DragEvent) {
+  const images = imageFilesFrom(e.dataTransfer)
+  if (!images.length) return
+  e.preventDefault()
+  e.stopPropagation() // the app-level drop handler opens .md files only
+  images.forEach((file) => emit('image-file', file))
+}
 
 onMounted(() => {
   view = new EditorView({
@@ -34,6 +61,8 @@ onMounted(() => {
     ],
     parent: host.value!,
   })
+  view.dom.addEventListener('paste', onPaste)
+  view.dom.addEventListener('drop', onDrop)
 })
 
 // external doc changes (e.g. opening a file) replace the CM document
@@ -48,7 +77,11 @@ watch(
   },
 )
 
-onBeforeUnmount(() => view?.destroy())
+onBeforeUnmount(() => {
+  view?.dom.removeEventListener('paste', onPaste)
+  view?.dom.removeEventListener('drop', onDrop)
+  view?.destroy()
+})
 
 /** jump to a source line (1-based): scroll it to the top of the viewport
  * (same recipe as scrollSync) and move the cursor there so the outline's
@@ -67,6 +100,16 @@ defineExpose({
     return view
   },
   scrollToLine,
+  /** insert text at the cursor (images, snippets) and focus the editor */
+  insertText(text: string) {
+    if (!view) return
+    const { from, to } = view.state.selection.main
+    view.dispatch({
+      changes: { from, to, insert: text },
+      selection: { anchor: from + text.length },
+    })
+    view.focus()
+  },
 })
 </script>
 
