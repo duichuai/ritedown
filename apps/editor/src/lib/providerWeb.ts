@@ -10,6 +10,7 @@ import {
   isAbortError,
   isFsAccessSupported,
   openMarkdownFile,
+  openMarkdownViaInput,
   pickSaveHandle,
   saveToHandle,
 } from './fsAccess'
@@ -94,6 +95,12 @@ async function readDoc(file: FileRef): Promise<{ name: string; text: string }> {
 
 async function openFile(): Promise<OpenedDoc | null> {
   try {
+    // no File System Access API (mobile Safari/Chrome): plain <input> picker,
+    // no handle -> saving falls back to Save As / download
+    if (!isFsAccessSupported()) {
+      const picked = await openMarkdownViaInput()
+      return { file: null, name: picked.name, text: picked.text }
+    }
     const opened = await openMarkdownFile()
     return {
       file: toFileRef(opened.handle),

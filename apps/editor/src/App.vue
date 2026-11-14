@@ -547,8 +547,8 @@ onBeforeUnmount(() => {
         <details class="tb-menu mobile-only">
           <summary class="tb-btn">☰</summary>
           <div class="tb-menu-list">
+            <button class="tb-btn" @click="onOpen">{{ t('open') }}</button>
             <template v-if="fsSupported">
-              <button class="tb-btn" @click="onOpen">{{ t('open') }}</button>
               <button class="tb-btn" @click="onSave">{{ t('save') }}</button>
               <button class="tb-btn" @click="onSaveAs">{{ t('saveAs') }}</button>
             </template>
@@ -565,8 +565,8 @@ onBeforeUnmount(() => {
           </div>
         </details>
         <button class="tb-btn tb-hide-sm" @click="tocVisible = !tocVisible">{{ t('outline') }}</button>
+        <button class="tb-btn tb-hide-sm" @click="onOpen">{{ t('open') }}</button>
         <template v-if="fsSupported">
-          <button class="tb-btn tb-hide-sm" @click="onOpen">{{ t('open') }}</button>
           <button class="tb-btn tb-hide-sm" @click="onSave">{{ t('save') }}</button>
           <button class="tb-btn tb-hide-sm" @click="onSaveAs">{{ t('saveAs') }}</button>
         </template>

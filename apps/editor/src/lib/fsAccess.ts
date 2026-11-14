@@ -38,6 +38,48 @@ export async function openMarkdownFile(): Promise<OpenedFile> {
   return { name: file.name, text: await file.text(), handle }
 }
 
+/** File picked without a filesystem handle (no Save To File support). */
+export interface OpenedPlainFile {
+  name: string
+  text: string
+}
+
+/**
+ * Pick a markdown file via a hidden <input type=file> — the fallback for
+ * browsers without the File System Access API (mobile Safari/Chrome etc.).
+ * Rejects with an AbortError DOMException when the dialog is cancelled.
+ */
+export function openMarkdownViaInput(): Promise<OpenedPlainFile> {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.md,.markdown,text/markdown'
+    input.style.display = 'none'
+    const cleanup = () => input.remove()
+    input.addEventListener('change', () => {
+      const file = input.files?.[0]
+      cleanup()
+      if (!file) {
+        reject(new DOMException('cancelled', 'AbortError'))
+        return
+      }
+      file
+        .text()
+        .then((text) => resolve({ name: file.name, text }))
+        .catch((err) => {
+          cleanup()
+          reject(err)
+        })
+    })
+    input.addEventListener('cancel', () => {
+      cleanup()
+      reject(new DOMException('cancelled', 'AbortError'))
+    })
+    document.body.appendChild(input)
+    input.click()
+  })
+}
+
 /** Write text to an existing file handle. */
 export async function saveToHandle(
   handle: FileSystemFileHandle,

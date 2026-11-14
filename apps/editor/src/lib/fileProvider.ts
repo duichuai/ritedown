@@ -24,7 +24,8 @@ export type WorkspaceEntry =
   | { kind: 'file'; name: string; handle: FileRef }
 
 export interface OpenedDoc {
-  file: FileRef
+  /** null when picked without a filesystem handle (mobile input fallback) */
+  file: FileRef | null
   name: string
   text: string
 }
