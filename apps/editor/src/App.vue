@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { builtin, render } from '@ritedown/core'
-import remarkGemoji from 'remark-gemoji'
-import remarkFrontmatter from 'remark-frontmatter'
-import remarkMath from 'remark-math'
+import { render } from '@ritedown/core'
 import EditorPane from './components/EditorPane.vue'
 import PreviewPane from './components/PreviewPane.vue'
 import FileTree from './components/FileTree.vue'
 import { DEFAULT_DOC } from './defaultDoc'
-import { remarkFrontmatterTable } from './lib/frontmatter'
-import { remarkMathToCode } from './lib/mathPlugin'
-import { remarkLineMarkers } from './lib/lineMarkers'
+import {
+  enabledPluginIds,
+  loadDisabledIds,
+  resolveExtensions,
+  saveDisabledIds,
+} from './lib/plugins'
 import { exportHtml, blobToDataUrl } from './lib/exportHtml'
 import { exportDocx } from './lib/exportDocx'
 import { imageAssetPath, imageMarkdown } from './lib/imageInsert'
@@ -55,18 +55,12 @@ const markdown = computed({
   },
 })
 
+const disabledPluginIds = ref<string[]>(loadDisabledIds())
+const enabledPluginIdsRef = computed(() => enabledPluginIds(disabledPluginIds.value))
+watch(disabledPluginIds, (ids) => saveDisabledIds(ids), { deep: true })
+
 const html = computed(() =>
-  render(markdown.value, {
-    extensions: [
-      builtin.gfm,
-      remarkGemoji,
-      remarkMath,
-      remarkMathToCode,
-      remarkLineMarkers,
-      [remarkFrontmatter, ['yaml']],
-      remarkFrontmatterTable,
-    ],
-  }),
+  render(markdown.value, { extensions: resolveExtensions(enabledPluginIdsRef.value) }),
 )
 
 const fsSupported = provider.fsSupported

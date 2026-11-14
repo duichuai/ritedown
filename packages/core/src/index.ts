@@ -7,6 +7,7 @@ import remarkGfmAlerts from '@ritedown/gfm-alerts'
 import type { Root } from 'mdast'
 
 export type { Root } from 'mdast'
+export type { Pluggable } from 'unified'
 
 /**
  * Syntax extensions available to the pipeline.
