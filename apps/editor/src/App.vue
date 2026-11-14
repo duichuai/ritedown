@@ -4,6 +4,7 @@ import { render } from '@ritedown/core'
 import EditorPane from './components/EditorPane.vue'
 import PreviewPane from './components/PreviewPane.vue'
 import FileTree from './components/FileTree.vue'
+import SettingsPanel from './components/SettingsPanel.vue'
 import { DEFAULT_DOC } from './defaultDoc'
 import {
   enabledPluginIds,
@@ -559,6 +560,7 @@ onBeforeUnmount(() => {
         <button class="tb-btn tb-lang" :title="t('switchLang')" @click="toggleLocale">
           {{ locale === 'zh' ? 'EN' : '中文' }}
         </button>
+        <SettingsPanel />
       </div>
     </header>
     <div class="tabbar">

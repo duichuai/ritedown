@@ -3,6 +3,7 @@ import {
   type Pluggable,
   type RitedownPlugin,
 } from '@ritedown/core'
+export type { RitedownPlugin } from '@ritedown/core'
 import remarkGemoji from 'remark-gemoji'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMath from 'remark-math'

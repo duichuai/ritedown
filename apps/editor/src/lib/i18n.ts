@@ -55,6 +55,8 @@ export const messages = {
     searching: '搜索中…',
     noResults: '无结果',
     switchLang: 'Switch to English',
+    settings: '设置',
+    plugins: '插件',
   },
   en: {
     outline: 'Outline',
@@ -88,6 +90,8 @@ export const messages = {
     searching: 'Searching…',
     noResults: 'No results',
     switchLang: '切换到中文',
+    settings: 'Settings',
+    plugins: 'Plugins',
   },
 } as const
 
