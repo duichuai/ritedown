@@ -32,13 +32,20 @@ An open-source Markdown editor that supports the **latest Markdown standards** �
 **Export / 导出**
 
 - Self-contained single-file HTML export (KaTeX fonts inlined — works offline)
+- Word (.docx) export: headings, inline marks, links, lists, code blocks,
+  blockquotes and tables; math stays as literal LaTeX, images embed when fetchable
 
-## Browser support / 浏览器支持
+## Platform support / 平台支持
 
-Chrome / Edge / Opera (Chromium). Opening, saving, the folder workspace and
-image embedding rely on the [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API);
+**Desktop / 桌面端** — native Tauri 2 app (Windows / macOS / Linux, ~10 MB):
+system open/save dialogs, folder workspaces without permission prompts,
+unsaved-close guard and a live window title. Grab an installer from the
+[latest release](https://github.com/duichuai/ritedown/releases/latest).
+
+**Web / 浏览器端** — Chrome / Edge / Opera (Chromium). Opening, saving, the
+folder workspace and image embedding rely on the
+[File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API);
 Firefox / Safari fall back to read-only opens and Save-As pickers.
-A Tauri 2 desktop shell is planned after v1.0.
 
 ## Getting started / 快速开始
 
@@ -58,7 +65,7 @@ pnpm monorepo:
 packages/core        # framework-agnostic kernel: parse + render + editor core (@ritedown/core)
 packages/transformer # syntax extensions: gfm / math / mermaid / ...
 apps/editor          # web app (Vue 3 + Vite)
-apps/desktop         # Tauri 2 desktop shell (planned)
+apps/desktop         # Tauri 2 desktop shell (@ritedown/editor embedded)
 docs/                # docs (zh / en)
 ```
 
@@ -67,7 +74,8 @@ docs/                # docs (zh / en)
 - ~~M1: source editing + live split preview~~ ✅
 - ~~M2: Math / Mermaid / Shiki, WYSIWYG inline rendering~~ ✅
 - ~~M3: workspace (file tree, tabs, global search), WYSIWYG block rendering~~ ✅ (v1.0)
-- M4: Tauri 2 desktop shell, docx export, plugin system, mobile
+- ~~M4: Tauri 2 desktop shell, FileProvider file layer, docx export, window polish~~ ✅ (v2.0.0-beta.1)
+- M5: plugin system, mobile shells
 
 See [docs/方案评估.md](docs/方案评估.md) for the full proposal and [CHANGELOG.md](CHANGELOG.md) for release history.
 

@@ -1,6 +1,6 @@
 {
   "name": "@ritedown/gfm-alerts",
-  "version": "1.0.0",
+  "version": "2.0.0-beta.1",
   "description": "remark plugin: GitHub Flavored Markdown alerts (> [!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION])",
   "license": "MIT",
   "author": "duichuai",
