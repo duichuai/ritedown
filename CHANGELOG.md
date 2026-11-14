@@ -4,6 +4,35 @@ All notable changes to Ritedown are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.1.0-beta.0] - 2026-11-14
+
+Plugin system and mobile web.
+
+### Plugin system
+
+- `RitedownPlugin` interface and `builtinPlugins` registry in
+  `@ritedown/core`; editor-side plugins (gemoji, math, front matter,
+  line markers…) join the same registry, and the preview pipeline is
+  assembled from enabled ids — canonical order preserved
+- Settings panel (⚙ in the titlebar): toggle every registered plugin;
+  disabled ids persist as a diff list, so newly shipped plugins stay
+  enabled for existing users
+- GFM Alerts (`> [!NOTE]` …) is now actually wired into the preview
+  pipeline — previously the default document and styles referenced it
+  but the extension was never enabled
+
+### Mobile web (PWA)
+
+- PWA baseline: web manifest, installable icons, hand-rolled service
+  worker (precached navigation shell + stale-while-revalidate runtime
+  cache for hashed assets)
+- Responsive layout at ≤720px: single-column editor/preview toggle,
+  sidebar becomes a fixed drawer, titlebar buttons collapse into an
+  overflow menu
+- Opening files falls back to a hidden `<input type=file>` in browsers
+  without the File System Access API (iOS Safari, Android Chrome);
+  saving/exporting already had download fallbacks
+
 ## [2.0.0-beta.1] - 2026-11-14
 
 First beta of the desktop era: the same editor now ships as a native

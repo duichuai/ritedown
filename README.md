@@ -75,7 +75,7 @@ docs/                # docs (zh / en)
 - ~~M2: Math / Mermaid / Shiki, WYSIWYG inline rendering~~ ✅
 - ~~M3: workspace (file tree, tabs, global search), WYSIWYG block rendering~~ ✅ (v1.0)
 - ~~M4: Tauri 2 desktop shell, FileProvider file layer, docx export, window polish~~ ✅ (v2.0.0-beta.1)
-- M5: plugin system, mobile shells
+- ~~M5: plugin system (registry + settings panel), PWA + responsive mobile web~~ ✅
 
 See [docs/方案评估.md](docs/方案评估.md) for the full proposal and [CHANGELOG.md](CHANGELOG.md) for release history.
 
