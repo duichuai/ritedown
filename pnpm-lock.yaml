@@ -22,6 +22,9 @@ importers:
       '@ritedown/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@tauri-apps/api':
+        specifier: ^2.12.4
+        version: 2.12.4
       '@tauri-apps/plugin-dialog':
         specifier: ^2.8.4
         version: 2.8.4

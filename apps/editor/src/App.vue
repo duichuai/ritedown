@@ -26,6 +26,7 @@ import { wordCount } from './lib/wordCount'
 import { locale, t, toggleLocale } from './lib/i18n'
 import { cycleTheme, themePref } from './lib/theme'
 import { provider } from './lib/provider'
+import { applyTitle, interceptClose } from './lib/windowChrome'
 import { toFileRef } from './lib/providerWeb'
 import type { DirRef, FileRef } from './lib/fileProvider'
 import {
@@ -412,6 +413,22 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
+
+// window/document title follows the active tab; the native close button asks
+// for confirmation while there are unsaved changes (desktop only)
+watch(
+  [fileName, dirty],
+  ([name, hasChanges]) => {
+    applyTitle(`${hasChanges ? '● ' : ''}${name ?? t('untitled')} — Ritedown`)
+  },
+  { immediate: true },
+)
+onMounted(() => {
+  void interceptClose(
+    () => dirty.value,
+    () => t('confirmClose'),
+  )
+})
 
 const editorPane = ref<InstanceType<typeof EditorPane> | null>(null)
 const previewPane = ref<InstanceType<typeof PreviewPane> | null>(null)
