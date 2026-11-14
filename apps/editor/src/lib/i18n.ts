@@ -57,6 +57,8 @@ export const messages = {
     switchLang: 'Switch to English',
     settings: '设置',
     plugins: '插件',
+    editPane: '编辑',
+    previewPane: '预览',
   },
   en: {
     outline: 'Outline',
@@ -92,6 +94,8 @@ export const messages = {
     switchLang: '切换到中文',
     settings: 'Settings',
     plugins: 'Plugins',
+    editPane: 'Edit',
+    previewPane: 'Preview',
   },
 } as const
 

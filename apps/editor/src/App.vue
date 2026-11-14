@@ -60,6 +60,9 @@ const disabledPluginIds = ref<string[]>(loadDisabledIds())
 const enabledPluginIdsRef = computed(() => enabledPluginIds(disabledPluginIds.value))
 watch(disabledPluginIds, (ids) => saveDisabledIds(ids), { deep: true })
 
+// narrow screens: single column, toggle which pane fills the viewport
+const mobilePane = ref<'editor' | 'preview'>('editor')
+
 const html = computed(() =>
   render(markdown.value, { extensions: resolveExtensions(enabledPluginIdsRef.value) }),
 )
@@ -538,26 +541,49 @@ onBeforeUnmount(() => {
       <span v-if="fileName" class="filename">{{ fileName }}</span>
       <span v-if="dirty" class="dirty-dot" :title="t('dirty')">●</span>
       <div class="titlebar-actions">
-        <button class="tb-btn" @click="tocVisible = !tocVisible">{{ t('outline') }}</button>
+        <button class="tb-btn mobile-only" @click="mobilePane = mobilePane === 'editor' ? 'preview' : 'editor'">
+          {{ mobilePane === 'editor' ? t('previewPane') : t('editPane') }}
+        </button>
+        <details class="tb-menu mobile-only">
+          <summary class="tb-btn">☰</summary>
+          <div class="tb-menu-list">
+            <template v-if="fsSupported">
+              <button class="tb-btn" @click="onOpen">{{ t('open') }}</button>
+              <button class="tb-btn" @click="onSave">{{ t('save') }}</button>
+              <button class="tb-btn" @click="onSaveAs">{{ t('saveAs') }}</button>
+            </template>
+            <button class="tb-btn" @click="onExportHtml">{{ t('export') }}</button>
+            <button class="tb-btn" @click="onExportDocx">{{ t('exportDocx') }}</button>
+            <button class="tb-btn" :class="{ 'tb-active': wysiwyg }" @click="toggleWysiwyg">
+              {{ t('wysiwyg') }}
+            </button>
+            <button class="tb-btn" @click="cycleTheme">{{ themeLabel }}</button>
+            <button class="tb-btn" @click="toggleLocale">
+              {{ locale === 'zh' ? 'EN' : '中文' }}
+            </button>
+            <button class="tb-btn" @click="tocVisible = !tocVisible">{{ t('outline') }}</button>
+          </div>
+        </details>
+        <button class="tb-btn tb-hide-sm" @click="tocVisible = !tocVisible">{{ t('outline') }}</button>
         <template v-if="fsSupported">
-          <button class="tb-btn" @click="onOpen">{{ t('open') }}</button>
-          <button class="tb-btn" @click="onSave">{{ t('save') }}</button>
-          <button class="tb-btn" @click="onSaveAs">{{ t('saveAs') }}</button>
+          <button class="tb-btn tb-hide-sm" @click="onOpen">{{ t('open') }}</button>
+          <button class="tb-btn tb-hide-sm" @click="onSave">{{ t('save') }}</button>
+          <button class="tb-btn tb-hide-sm" @click="onSaveAs">{{ t('saveAs') }}</button>
         </template>
-        <button class="tb-btn" @click="onExportHtml">{{ t('export') }}</button>
-        <button class="tb-btn" @click="onExportDocx">{{ t('exportDocx') }}</button>
+        <button class="tb-btn tb-hide-sm" @click="onExportHtml">{{ t('export') }}</button>
+        <button class="tb-btn tb-hide-sm" @click="onExportDocx">{{ t('exportDocx') }}</button>
         <button
-          class="tb-btn"
+          class="tb-btn tb-hide-sm"
           :class="{ 'tb-active': wysiwyg }"
           :title="t('wysiwyg')"
           @click="toggleWysiwyg"
         >
           {{ t('wysiwyg') }}
         </button>
-        <button class="tb-btn" :title="t('theme')" @click="cycleTheme">
+        <button class="tb-btn tb-hide-sm" :title="t('theme')" @click="cycleTheme">
           {{ themeLabel }}
         </button>
-        <button class="tb-btn tb-lang" :title="t('switchLang')" @click="toggleLocale">
+        <button class="tb-btn tb-lang tb-hide-sm" :title="t('switchLang')" @click="toggleLocale">
           {{ locale === 'zh' ? 'EN' : '中文' }}
         </button>
         <SettingsPanel />
@@ -579,7 +605,10 @@ onBeforeUnmount(() => {
         </button>
       </div>
     </div>
-    <main class="split" :class="{ 'with-toc': tocVisible }">
+    <main
+      class="split"
+      :class="{ 'with-toc': tocVisible, 'show-preview': mobilePane === 'preview' }"
+    >
       <aside v-if="tocVisible" class="sidebar">
         <div class="panel">
           <div class="panel-header">{{ t('workspace') }}</div>
