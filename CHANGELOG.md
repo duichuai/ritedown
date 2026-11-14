@@ -4,7 +4,7 @@ All notable changes to Ritedown are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [2.1.0-beta.0] - 2026-11-14
+## [2.1.0] - 2026-11-14
 
 Plugin system and mobile web.
 
@@ -111,6 +111,7 @@ framework-agnostic `@ritedown/core` pipeline.
 Project bootstrap: monorepo layout, `@ritedown/core` render pipeline and
 the first editor prototype.
 
+[2.1.0]: https://github.com/duichuai/ritedown/releases/tag/v2.1.0
 [2.0.0-beta.1]: https://github.com/duichuai/ritedown/releases/tag/v2.0.0-beta.1
 [1.0.0]: https://github.com/duichuai/ritedown/releases/tag/v1.0.0
 [0.1.0]: https://github.com/duichuai/ritedown/releases/tag/v0.1.0
