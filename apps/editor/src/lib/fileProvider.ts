@@ -59,6 +59,13 @@ export interface FileProvider {
     existing?: FileRef | null,
     fileType?: FileTypeOptions,
   ): Promise<SavedDoc | null>
+  /** save binary data (e.g. the docx export) to a new file;
+   * null when cancelled */
+  saveBlob(
+    defaultName: string,
+    data: Blob,
+    fileType?: FileTypeOptions,
+  ): Promise<SavedDoc | null>
   /** pick the workspace folder and remember it; null when cancelled */
   pickWorkspace(): Promise<DirRef | null>
   /** load the persisted workspace; may require a permission grant on the web */

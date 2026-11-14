@@ -12,6 +12,7 @@ import { remarkFrontmatterTable } from './lib/frontmatter'
 import { remarkMathToCode } from './lib/mathPlugin'
 import { remarkLineMarkers } from './lib/lineMarkers'
 import { exportHtml, blobToDataUrl } from './lib/exportHtml'
+import { exportDocx } from './lib/exportDocx'
 import { imageAssetPath, imageMarkdown } from './lib/imageInsert'
 import {
   hasBaseDir,
@@ -212,6 +213,18 @@ async function onExportHtml() {
     await exportHtml(host, base, `${base}.html`)
   } catch (err) {
     console.warn('export failed:', err)
+  }
+}
+
+async function onExportDocx() {
+  try {
+    const base = (fileName.value ?? t('untitled')).replace(
+      /\.(md|markdown)$/i,
+      '',
+    )
+    await exportDocx(markdown.value, `${base}.docx`)
+  } catch (err) {
+    console.warn('docx export failed:', err)
   }
 }
 
@@ -520,6 +533,7 @@ onBeforeUnmount(() => {
           <button class="tb-btn" @click="onSaveAs">{{ t('saveAs') }}</button>
         </template>
         <button class="tb-btn" @click="onExportHtml">{{ t('export') }}</button>
+        <button class="tb-btn" @click="onExportDocx">{{ t('exportDocx') }}</button>
         <button
           class="tb-btn"
           :class="{ 'tb-active': wysiwyg }"

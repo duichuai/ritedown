@@ -30,9 +30,16 @@ function createProcessor(options: RitedownOptions = {}) {
     .use(rehypeStringify)
 }
 
-/** Parse markdown into an mdast tree (CommonMark 0.31.2 + enabled extensions). */
+/** remark-only pipeline (no rehype): used by parse() to stay in mdast */
+function createParser(options: RitedownOptions = {}) {
+  return unified().use(remarkParse).use(options.extensions ?? [])
+}
+
+/** Parse markdown into an mdast tree (CommonMark 0.31.2 + enabled extensions;
+ * transformer-phase plugins like gemoji run too). */
 export function parse(markdown: string, options?: RitedownOptions): Root {
-  return createProcessor(options).parse(markdown) as Root
+  const processor = createParser(options)
+  return processor.runSync(processor.parse(markdown)) as Root
 }
 
 /** Render markdown to HTML (CommonMark 0.31.2 + enabled extensions). */

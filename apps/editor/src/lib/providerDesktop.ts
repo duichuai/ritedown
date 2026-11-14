@@ -93,6 +93,20 @@ async function saveFile(
   return { file: fileRef(path), name: basename(path) }
 }
 
+async function saveBlob(
+  defaultName: string,
+  data: Blob,
+  fileType?: FileTypeOptions,
+): Promise<SavedDoc | null> {
+  const path = await dialogSave({
+    defaultPath: defaultName,
+    filters: dialogFilters(fileType),
+  })
+  if (!path) return null
+  await writeFile(path, new Uint8Array(await data.arrayBuffer()))
+  return { file: fileRef(path), name: basename(path) }
+}
+
 async function pickWorkspace(): Promise<DirRef | null> {
   const path = await dialogOpen({ directory: true, multiple: false })
   if (typeof path !== 'string') return null
@@ -194,6 +208,7 @@ export const desktopProvider: FileProvider = {
   workspaceSupported: true,
   openFile,
   saveFile,
+  saveBlob,
   pickWorkspace,
   restoreWorkspace,
   grantWorkspace,

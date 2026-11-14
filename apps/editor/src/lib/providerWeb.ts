@@ -113,7 +113,9 @@ function acceptFor(extensions: string[]): Record<string, string[]> {
       ? 'text/markdown'
       : /txt$/i.test(extensions[0] ?? '')
         ? 'text/plain'
-        : 'application/octet-stream'
+        : /docx$/i.test(extensions[0] ?? '')
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/octet-stream'
   return { [mime]: extensions }
 }
 
@@ -141,6 +143,33 @@ async function saveFile(
   try {
     const handle = await pickSaveHandle(defaultName, options)
     await saveToHandle(handle, text)
+    return { file: toFileRef(handle), name: handle.name }
+  } catch (err) {
+    if (isAbortError(err)) return null
+    throw err
+  }
+}
+
+async function saveBlob(
+  defaultName: string,
+  data: Blob,
+  fileType?: FileTypeOptions,
+): Promise<SavedDoc | null> {
+  const options: Record<string, unknown> = fileType
+    ? {
+        types: [
+          {
+            description: fileType.description ?? 'File',
+            accept: acceptFor(fileType.extensions),
+          },
+        ],
+      }
+    : {}
+  try {
+    const handle = await pickSaveHandle(defaultName, options)
+    const writable = await handle.createWritable()
+    await writable.write(data)
+    await writable.close()
     return { file: toFileRef(handle), name: handle.name }
   } catch (err) {
     if (isAbortError(err)) return null
@@ -243,6 +272,7 @@ export const webProvider: FileProvider = {
   },
   openFile,
   saveFile,
+  saveBlob,
   pickWorkspace,
   restoreWorkspace,
   grantWorkspace,
