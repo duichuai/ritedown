@@ -2579,7 +2579,7 @@ dependencies = [
 
 [[package]]
 name = "ritedown"
-version = "2.0.0-beta.1"
+version = "2.1.0-beta.0"
 dependencies = [
  "serde",
  "serde_json",

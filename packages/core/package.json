@@ -1,6 +1,6 @@
 {
   "name": "@ritedown/core",
-  "version": "2.0.0-beta.1",
+  "version": "2.1.0-beta.0",
   "description": "Ritedown kernel: Markdown parse & render pipeline (CommonMark 0.31.2 based, pluggable extensions)",
   "license": "MIT",
   "author": "duichuai",
