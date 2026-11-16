@@ -2,12 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_DOC } from '../src/defaultDoc'
 import { render } from '@ritedown/core'
 import {
+  disabledPluginIds,
   enabledPluginIds,
   isEnabled,
   listPlugins,
   loadDisabledIds,
   resolveExtensions,
   saveDisabledIds,
+  togglePlugin,
 } from '../src/lib/plugins'
 
 // node test env has no localStorage — provide a minimal in-memory stub
@@ -101,5 +103,29 @@ describe('disabled-ids persistence', () => {
     const gfm = listPlugins()[0]
     expect(isEnabled(gfm, ['gfm'])).toBe(false)
     expect(isEnabled(gfm, [])).toBe(true)
+  })
+})
+
+describe('shared disabled-plugin state', () => {
+  it('togglePlugin mutates the shared ref and persists it', () => {
+    disabledPluginIds.value = []
+    togglePlugin('math')
+    expect(disabledPluginIds.value).toEqual(['math'])
+    expect(loadDisabledIds()).toEqual(['math'])
+
+    togglePlugin('gemoji')
+    expect(disabledPluginIds.value).toEqual(['math', 'gemoji'])
+    expect(loadDisabledIds()).toEqual(['math', 'gemoji'])
+
+    togglePlugin('math') // toggle again removes it
+    expect(disabledPluginIds.value).toEqual(['gemoji'])
+    expect(loadDisabledIds()).toEqual(['gemoji'])
+  })
+
+  it('togglePlugin survives duplicated ids without corrupting state', () => {
+    disabledPluginIds.value = ['math']
+    togglePlugin('math')
+    togglePlugin('math')
+    expect(disabledPluginIds.value).toEqual(['math'])
   })
 })

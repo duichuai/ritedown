@@ -7,10 +7,9 @@ import FileTree from './components/FileTree.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import { DEFAULT_DOC } from './defaultDoc'
 import {
+  disabledPluginIds,
   enabledPluginIds,
-  loadDisabledIds,
   resolveExtensions,
-  saveDisabledIds,
 } from './lib/plugins'
 import { exportHtml, blobToDataUrl } from './lib/exportHtml'
 import { exportDocx } from './lib/exportDocx'
@@ -27,7 +26,7 @@ import { wordCount } from './lib/wordCount'
 import { locale, t, toggleLocale } from './lib/i18n'
 import { cycleTheme, themePref } from './lib/theme'
 import { provider } from './lib/provider'
-import { applyTitle, interceptClose } from './lib/windowChrome'
+import { applyTitle, confirmDialog, interceptClose } from './lib/windowChrome'
 import { toFileRef } from './lib/providerWeb'
 import type { DirRef, FileRef } from './lib/fileProvider'
 import {
@@ -56,9 +55,10 @@ const markdown = computed({
   },
 })
 
-const disabledPluginIds = ref<string[]>(loadDisabledIds())
+// plugin toggles live in a shared reactive ref (lib/plugins) written by the
+// settings panel; the render pipeline reads it directly so toggles take
+// effect immediately
 const enabledPluginIdsRef = computed(() => enabledPluginIds(disabledPluginIds.value))
-watch(disabledPluginIds, (ids) => saveDisabledIds(ids), { deep: true })
 
 // narrow screens: single column, toggle which pane fills the viewport
 const mobilePane = ref<'editor' | 'preview'>('editor')
@@ -102,11 +102,11 @@ function openTab(
   activeId.value = tab.id
 }
 
-function closeTab(id: number) {
+async function closeTab(id: number) {
   const index = tabs.value.findIndex((tab) => tab.id === id)
   if (index === -1) return
   const tab = tabs.value[index]
-  if (tab.text !== tab.saved && !window.confirm(t('confirmClose'))) return
+  if (tab.text !== tab.saved && !(await confirmDialog(t('confirmClose')))) return
   const wasActive = id === activeId.value
   const neighbor = neighborTabId(tabs.value, index)
   tabs.value.splice(index, 1)

@@ -2,10 +2,10 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { t } from '../lib/i18n'
 import {
+  disabledPluginIds,
   isEnabled,
   listPlugins,
-  loadDisabledIds,
-  saveDisabledIds,
+  togglePlugin,
   type RitedownPlugin,
 } from '../lib/plugins'
 
@@ -13,19 +13,9 @@ const open = ref(false)
 const rootEl = ref<HTMLElement | null>(null)
 
 const plugins = ref<RitedownPlugin[]>([])
-const disabledIds = ref<string[]>([])
 
 function refresh(): void {
   plugins.value = listPlugins()
-  disabledIds.value = loadDisabledIds()
-}
-
-function toggle(plugin: RitedownPlugin): void {
-  const idx = disabledIds.value.indexOf(plugin.id)
-  if (idx >= 0) disabledIds.value.splice(idx, 1)
-  else disabledIds.value.push(plugin.id)
-  saveDisabledIds(disabledIds.value)
-  refresh()
 }
 
 function toggleOpen(): void {
@@ -55,8 +45,8 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
       <label v-for="p in plugins" :key="p.id" class="plugin-row">
         <input
           type="checkbox"
-          :checked="isEnabled(p, disabledIds)"
-          @change="toggle(p)"
+          :checked="isEnabled(p, disabledPluginIds)"
+          @change="togglePlugin(p.id)"
         />
         <span class="plugin-name">{{ p.name }}</span>
         <span class="plugin-desc">{{ p.description }}</span>

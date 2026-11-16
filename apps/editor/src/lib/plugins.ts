@@ -4,6 +4,7 @@ import {
   type RitedownPlugin,
 } from '@ritedown/core'
 export type { RitedownPlugin } from '@ritedown/core'
+import { ref } from 'vue'
 import remarkGemoji from 'remark-gemoji'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMath from 'remark-math'
@@ -88,6 +89,22 @@ export function saveDisabledIds(ids: string[]): void {
   } catch {
     /* storage unavailable — settings stay session-only */
   }
+}
+
+/**
+ * Single source of truth for the disabled-plugin list, shared by the
+ * settings panel (writer) and the render pipeline (reader) so toggles take
+ * effect immediately; seeded from localStorage once at module load.
+ */
+export const disabledPluginIds = ref<string[]>(loadDisabledIds())
+
+/** Toggle one plugin in the shared state and persist the change. */
+export function togglePlugin(id: string): void {
+  const ids = disabledPluginIds.value
+  const index = ids.indexOf(id)
+  if (index >= 0) ids.splice(index, 1)
+  else ids.push(id)
+  saveDisabledIds(ids)
 }
 
 /** Enabled = present in the registry and not in the disabled list. */
