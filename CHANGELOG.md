@@ -4,6 +4,21 @@ All notable changes to Ritedown are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.1.1] - 2026-11-16
+
+Bug fixes from Windows real-machine testing.
+
+### Fixed
+
+- Close interception: closing the window (or a dirty tab) with unsaved
+  changes now shows a real confirmation dialog instead of exiting
+  silently — `window.confirm` never renders UI under Tauri/WebView2, so
+  the guard is reimplemented on the dialog plugin (`ask()` with
+  localized buttons) and falls back to `window.confirm` on the web
+- Plugin toggles take effect immediately: the settings panel and the
+  preview pipeline now share one reactive disabled-list, instead of the
+  panel writing localStorage that the pipeline only re-read after restart
+
 ## [2.1.0] - 2026-11-14
 
 Plugin system and mobile web.
@@ -111,6 +126,7 @@ framework-agnostic `@ritedown/core` pipeline.
 Project bootstrap: monorepo layout, `@ritedown/core` render pipeline and
 the first editor prototype.
 
+[2.1.1]: https://github.com/duichuai/ritedown/releases/tag/v2.1.1
 [2.1.0]: https://github.com/duichuai/ritedown/releases/tag/v2.1.0
 [2.0.0-beta.1]: https://github.com/duichuai/ritedown/releases/tag/v2.0.0-beta.1
 [1.0.0]: https://github.com/duichuai/ritedown/releases/tag/v1.0.0
