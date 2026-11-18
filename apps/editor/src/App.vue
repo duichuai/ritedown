@@ -21,7 +21,11 @@ import {
   setBaseDir,
   writeImageToBaseDir,
 } from './lib/relImages'
-import { syncEditorToPreview, syncPreviewToEditor } from './lib/scrollSync'
+import {
+  collectLineMap,
+  syncEditorToPreview,
+  syncPreviewToEditor,
+} from './lib/scrollSync'
 import { buildToc } from './lib/toc'
 import { wordCount } from './lib/wordCount'
 import { locale, t, toggleLocale } from './lib/i18n'
@@ -228,7 +232,7 @@ async function onExportDocx() {
   }
 }
 
-function onExportPdf() {
+async function onExportPdf() {
   try {
     const host = previewPane.value?.host
     if (!host) return
@@ -236,7 +240,7 @@ function onExportPdf() {
       /\.(md|markdown)$/i,
       '',
     )
-    printToPdf(host, base)
+    await printToPdf(host, base)
   } catch (err) {
     console.warn('pdf export failed:', err)
   }
@@ -463,14 +467,34 @@ const stats = computed(() => ({
   ...wordCount(markdown.value),
   lines: markdown.value.split('\n').length,
 }))
+// outline highlight: follows the preview's scroll position (scroll-spy) and
+// falls back to the editor cursor while editing without scrolling
+const scrollTocLine = ref<number | null>(null)
 const activeTocLine = computed(() => {
+  const at = scrollTocLine.value ?? cursorLine.value
   let line = 0
   for (const item of tocItems.value) {
-    if (item.line <= cursorLine.value) line = item.line
+    if (item.line <= at) line = item.line
     else break
   }
   return line
 })
+
+/** first preview block that has scrolled past the viewport top */
+function updateTocFromScroll() {
+  const host = previewPane.value?.host
+  if (!host) return
+  const map = collectLineMap(host)
+  if (!map.length) return
+  const hostRect = host.getBoundingClientRect()
+  if (!hostRect.height) return // hidden pane (narrow layout)
+  let line = map[0].line
+  for (const entry of map) {
+    if (entry.el.getBoundingClientRect().top - hostRect.top <= 8) line = entry.line
+    else break
+  }
+  scrollTocLine.value = line
+}
 
 function onTocClick(item: { line: number }) {
   editorPane.value?.scrollToLine(item.line)
@@ -479,10 +503,12 @@ function onTocClick(item: { line: number }) {
 // remember the cursor position per tab; restored when switching tabs
 function onCursorLine(line: number) {
   cursorLine.value = line
+  scrollTocLine.value = null
   if (activeTab.value) activeTab.value.cursorLine = line
 }
 
 watch(activeId, async (id) => {
+  scrollTocLine.value = null
   await nextTick()
   const tab = tabs.value.find((tb) => tb.id === id)
   if (tab) editorPane.value?.scrollToLine(tab.cursorLine)
@@ -509,6 +535,7 @@ function schedule(side: 'editor' | 'preview') {
     if (!view || !host) return
     if (side === 'editor') syncEditorToPreview(view, host)
     else syncPreviewToEditor(view, host)
+    updateTocFromScroll()
   })
 }
 

@@ -41,6 +41,9 @@ body,
 #app {
   height: 100%;
   margin: 0;
+  /* the document itself never scrolls: panes scroll internally, so the
+     titlebar and the sidebar stay put */
+  overflow: hidden;
 }
 
 body {
@@ -54,6 +57,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .titlebar {
@@ -372,6 +376,14 @@ body {
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  /* the single row is pinned to the remaining height; without minmax(0, 1fr)
+     a tall document grows the auto row and scrolls the whole page away */
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.split > * {
   min-height: 0;
 }
 
@@ -453,7 +465,9 @@ body {
 .preview-wrap {
   position: relative;
   min-width: 0;
+  min-height: 0;
   display: flex;
+  overflow: hidden;
 }
 
 .preview-wrap .preview-pane {
@@ -740,7 +754,21 @@ body {
 }
 
 @media print {
-  .app {
+  /* #app keeps height:100% otherwise, which pushes a blank leading page in
+     front of the print snapshot */
+  html,
+  body,
+  #app {
+    height: auto;
+    overflow: visible !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  #app {
     display: none !important;
   }
 
