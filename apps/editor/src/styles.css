@@ -731,3 +731,49 @@ body {
     display: none;
   }
 }
+
+/* ===== print / PDF export (lib/printPdf.ts) =====
+   only the hidden #print-root snapshot of the preview is printed;
+   the palette is forced to light via variable overrides on the container */
+#print-root {
+  display: none;
+}
+
+@media print {
+  .app {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block;
+    --bg: #ffffff;
+    --bg-soft: #f6f8fa;
+    --fg: #1f2328;
+    --fg-soft: #59636e;
+    --border: #d1d9e0;
+    --accent: #0969da;
+  }
+
+  #print-root pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: visible;
+  }
+
+  #print-root pre,
+  #print-root blockquote,
+  #print-root .markdown-alert,
+  #print-root .katex-display,
+  #print-root tr {
+    break-inside: avoid;
+  }
+
+  #print-root h1,
+  #print-root h2,
+  #print-root h3,
+  #print-root h4,
+  #print-root h5,
+  #print-root h6 {
+    break-after: avoid;
+  }
+}

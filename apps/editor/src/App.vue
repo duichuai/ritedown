@@ -13,6 +13,7 @@ import {
 } from './lib/plugins'
 import { exportHtml, blobToDataUrl } from './lib/exportHtml'
 import { exportDocx } from './lib/exportDocx'
+import { printToPdf } from './lib/printPdf'
 import { imageAssetPath, imageMarkdown } from './lib/imageInsert'
 import {
   hasBaseDir,
@@ -224,6 +225,20 @@ async function onExportDocx() {
     await exportDocx(markdown.value, `${base}.docx`)
   } catch (err) {
     console.warn('docx export failed:', err)
+  }
+}
+
+function onExportPdf() {
+  try {
+    const host = previewPane.value?.host
+    if (!host) return
+    const base = (fileName.value ?? t('untitled')).replace(
+      /\.(md|markdown)$/i,
+      '',
+    )
+    printToPdf(host, base)
+  } catch (err) {
+    console.warn('pdf export failed:', err)
   }
 }
 
@@ -554,6 +569,7 @@ onBeforeUnmount(() => {
             </template>
             <button class="tb-btn" @click="onExportHtml">{{ t('export') }}</button>
             <button class="tb-btn" @click="onExportDocx">{{ t('exportDocx') }}</button>
+            <button class="tb-btn" @click="onExportPdf">{{ t('exportPdf') }}</button>
             <button class="tb-btn" :class="{ 'tb-active': wysiwyg }" @click="toggleWysiwyg">
               {{ t('wysiwyg') }}
             </button>
@@ -572,6 +588,7 @@ onBeforeUnmount(() => {
         </template>
         <button class="tb-btn tb-hide-sm" @click="onExportHtml">{{ t('export') }}</button>
         <button class="tb-btn tb-hide-sm" @click="onExportDocx">{{ t('exportDocx') }}</button>
+        <button class="tb-btn tb-hide-sm" @click="onExportPdf">{{ t('exportPdf') }}</button>
         <button
           class="tb-btn tb-hide-sm"
           :class="{ 'tb-active': wysiwyg }"
