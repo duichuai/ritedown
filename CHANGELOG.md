@@ -4,6 +4,24 @@ All notable changes to Ritedown are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.2.0] - 2026-11-18
+
+PDF export and desktop bundling fix.
+
+### Added
+
+- Export PDF: the preview snapshot (Shiki highlight, Mermaid, KaTeX and
+  relative images already rendered) is printed through the webview's
+  native print pipeline — one code path for desktop (WebView2 /
+  WKWebView / WebKitGTK) and the web; the print dialog suggests the
+  document name as the file name, page breaks avoid splitting code
+  blocks / tables / formulas, and the output is always light-themed
+
+### Fixed
+
+- Desktop bundle version now follows the release tag — the previous
+  v2.1.1 installers still carried the 2.1.0 bundle version
+
 ## [2.1.1] - 2026-11-16
 
 Bug fixes from Windows real-machine testing.
