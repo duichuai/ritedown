@@ -8,7 +8,7 @@
  *   runtime (no build-time manifest to maintain; vite emits hashed names)
  * - bump CACHE_VERSION on release so old caches are purged on activate
  */
-const CACHE_VERSION = 'ritedown-v2.4.0'
+const CACHE_VERSION = 'ritedown-v2.5.0'
 const SHELL_CACHE = `${CACHE_VERSION}-shell`
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`
 

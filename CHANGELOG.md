@@ -4,6 +4,22 @@ All notable changes to Ritedown are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.5.0] - 2026-11-18
+
+Open markdown files straight from Explorer.
+
+### Added
+
+- Windows file association for `.md` and `.markdown`: the installer
+  registers Ritedown as an editor, and double-clicking a document launches
+  the app with that file already open in a tab (saving writes back to the
+  original path)
+
+### Fixed
+
+- Dropping a markdown file onto the desktop window did nothing — Tauri was
+  swallowing the drop event before the webview saw it
+
 ## [2.4.0] - 2026-11-18
 
 Faster writing: markdown formatting without leaving the keyboard.
