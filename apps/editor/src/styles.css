@@ -496,11 +496,82 @@ body {
 }
 
 .editor-pane {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border-right: 1px solid var(--border);
+}
+
+.editor-pane .cm-host {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .editor-pane .cm-editor {
   height: 100%;
+}
+
+/* markdown formatting toolbar above the source editor */
+.md-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-soft);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.md-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.md-tool {
+  flex: none;
+  width: 26px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--fg-soft);
+  cursor: pointer;
+}
+
+.md-tool svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.md-tool:hover {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.md-tool.active {
+  color: var(--accent);
+  background: var(--bg);
+}
+
+.md-sep {
+  flex: none;
+  width: 1px;
+  height: 14px;
+  margin: 0 5px;
+  background: var(--border);
+}
+
+.image-input {
+  display: none;
 }
 
 .editor-pane .cm-scroller {
