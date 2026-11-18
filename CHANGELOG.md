@@ -144,6 +144,7 @@ framework-agnostic `@ritedown/core` pipeline.
 Project bootstrap: monorepo layout, `@ritedown/core` render pipeline and
 the first editor prototype.
 
+[2.2.0]: https://github.com/duichuai/ritedown/releases/tag/v2.2.0
 [2.1.1]: https://github.com/duichuai/ritedown/releases/tag/v2.1.1
 [2.1.0]: https://github.com/duichuai/ritedown/releases/tag/v2.1.0
 [2.0.0-beta.1]: https://github.com/duichuai/ritedown/releases/tag/v2.0.0-beta.1

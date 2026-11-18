@@ -34,6 +34,9 @@ An open-source Markdown editor that supports the **latest Markdown standards** �
 - Self-contained single-file HTML export (KaTeX fonts inlined — works offline)
 - Word (.docx) export: headings, inline marks, links, lists, code blocks,
   blockquotes and tables; math stays as literal LaTeX, images embed when fetchable
+- PDF export: the rendered preview (highlighting, diagrams, formulas, images)
+  goes through the platform print pipeline — desktop and browser share one path,
+  the print dialog suggests the document name, and output is always light-themed
 
 ## Platform support / 平台支持
 
