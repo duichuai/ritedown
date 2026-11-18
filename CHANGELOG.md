@@ -4,6 +4,27 @@ All notable changes to Ritedown are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-11-18
+
+Desktop PDF polish and a chrome that stays in place.
+
+### Added
+
+- Export PDF on the desktop saves straight to the chosen path — the print
+  dialog is gone; the preview snapshot is rendered with WebView2
+  `PrintToPdf` (A4, 12 mm margins) and the heading outline is restored
+  afterwards with pdf-lib, since the renderer drops it
+
+### Fixed
+
+- Blank window after upgrading: the desktop webview no longer registers
+  the PWA service worker, and leftover registrations are removed on
+  startup so an old cached shell cannot outlive the assets it points at
+- The title bar, tab bar and outline stay frozen while the document
+  scrolls — panes scroll internally instead of the whole page
+- The outline highlights the section currently in view as the preview
+  scrolls, and follows the cursor again while editing
+
 ## [2.2.0] - 2026-11-18
 
 PDF export and desktop bundling fix.
