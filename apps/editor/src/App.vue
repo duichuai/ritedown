@@ -302,6 +302,18 @@ onMounted(async () => {
   else pendingRestore.value = restored.needsPermission
 })
 
+// open a file passed via file association (double-click in Explorer)
+onMounted(async () => {
+  if (provider.kind !== 'desktop') return
+  try {
+    const { openStartupFile } = await import('./lib/providerDesktop')
+    const doc = await openStartupFile()
+    if (doc) openTab(doc.name, doc.text, doc.file, null)
+  } catch (err) {
+    console.warn('startup file open failed:', err)
+  }
+})
+
 async function restoreWorkspace() {
   const dir = pendingRestore.value
   if (!dir) return

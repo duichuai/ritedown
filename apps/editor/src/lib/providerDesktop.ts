@@ -7,6 +7,7 @@
  */
 
 import { open as dialogOpen, save as dialogSave } from '@tauri-apps/plugin-dialog'
+import { invoke } from '@tauri-apps/api/core'
 import {
   exists,
   mkdir,
@@ -199,6 +200,17 @@ async function readAsset(dir: DirRef, path: string): Promise<Blob | null> {
     return new Blob([bytes])
   } catch {
     return null
+  }
+}
+
+/** open a file passed via file association (double-click in Explorer) */
+export async function openStartupFile(): Promise<OpenedDoc | null> {
+  const path = await invoke<string | null>('take_startup_file')
+  if (!path) return null
+  return {
+    file: fileRef(path),
+    name: basename(path),
+    text: await readTextFile(path),
   }
 }
 

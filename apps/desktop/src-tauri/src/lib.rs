@@ -1,9 +1,51 @@
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
+
+/// Holds the file path passed via file association (double-click in Explorer).
+/// The frontend picks it up once on mount via `take_startup_file`.
+struct PendingOpen(Mutex<Option<String>>);
+
+fn is_markdown(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .map(|ext| {
+            ext.eq_ignore_ascii_case("md") || ext.eq_ignore_ascii_case("markdown")
+        })
+        .unwrap_or(false)
+}
+
+/// Extract a markdown file path from command-line arguments, if any.
+fn startup_markdown_file() -> Option<String> {
+    std::env::args_os()
+        .skip(1) // skip the executable itself
+        .map(PathBuf::from)
+        .find_map(|path| {
+            if !path.is_file() || !is_markdown(&path) {
+                return None;
+            }
+            path.into_os_string().into_string().ok()
+        })
+}
+
+/// Called once by the frontend on mount to retrieve the startup file path.
+/// `take()` ensures the path is consumed only once.
+#[tauri::command]
+fn take_startup_file(state: tauri::State<'_, PendingOpen>) -> Option<String> {
+    state.0.lock().ok()?.take()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let startup_file = startup_markdown_file();
+
     tauri::Builder::default()
+        .manage(PendingOpen(Mutex::new(startup_file)))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![export_pdf])
+        .invoke_handler(tauri::generate_handler![export_pdf, take_startup_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
