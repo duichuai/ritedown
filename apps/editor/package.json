@@ -29,6 +29,7 @@
     "katex": "^0.16.0",
     "mdast": "^3.0.0",
     "mermaid": "^11.4.0",
+    "pdf-lib": "^1.17.1",
     "remark-frontmatter": "^5.0.0",
     "remark-gemoji": "^8.0.0",
     "remark-math": "^6.0.0",
