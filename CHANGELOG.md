@@ -4,6 +4,22 @@ All notable changes to Ritedown are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-11-18
+
+Faster writing: markdown formatting without leaving the keyboard.
+
+### Added
+
+- A formatting toolbar fixed above the source editor — bold, italic,
+  strikethrough, inline code, headings 1–3, bullet / ordered / task lists,
+  quote, code block, table, link, image, formula and divider; each button
+  lights up for the syntax node under the caret
+- Typora-style shortcuts for every toolbar action (`Mod-B`, `Mod-I`,
+  `Mod-1`…`Mod-3`, `Mod-Shift-[` / `]`, `Mod-Shift-K` and the rest), with
+  `Mod-0` to turn a heading back into a paragraph
+- A Notion-style `/` menu at the start of a line that offers the same
+  blocks, filters as you type, and reuses the paste / drop image picker
+
 ## [2.3.0] - 2026-11-18
 
 Desktop PDF polish and a chrome that stays in place.
